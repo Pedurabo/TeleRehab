@@ -44,7 +44,11 @@ android {
 dependencies {
 
 
-    implementation(libs.room3.runtime)
+
+    implementation(libs.work.runtime)
+    implementation(libs.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
+implementation(libs.room3.runtime)
     implementation(libs.sqlite.framework)
     ksp(libs.room3.compiler)
 implementation(libs.hilt.android)

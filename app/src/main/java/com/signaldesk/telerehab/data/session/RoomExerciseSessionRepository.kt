@@ -3,11 +3,12 @@ package com.signaldesk.telerehab.data.session
 import com.signaldesk.telerehab.core.database.dao.ExerciseSessionDao
 import com.signaldesk.telerehab.domain.session.ExerciseSession
 import com.signaldesk.telerehab.domain.session.ExerciseSessionRepository
+import com.signaldesk.telerehab.domain.session.sync.PendingExerciseSessionSource
 import javax.inject.Inject
 
 class RoomExerciseSessionRepository @Inject constructor(
     private val dao: ExerciseSessionDao,
-) : ExerciseSessionRepository {
+) : ExerciseSessionRepository, PendingExerciseSessionSource {
 
     override suspend fun save(
         session: ExerciseSession,
@@ -29,4 +30,11 @@ class RoomExerciseSessionRepository @Inject constructor(
         ).map { entity ->
             entity.toDomain()
         }
+    override suspend fun findPendingSessions(
+        limit: Int,
+    ): List<ExerciseSession> =
+        dao.findPendingForSync(limit)
+            .map { entity ->
+                entity.toDomain()
+            }
 }

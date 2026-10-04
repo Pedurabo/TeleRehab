@@ -36,4 +36,16 @@ interface ExerciseSessionDao {
         patientId: String,
         limit: Int,
     ): List<ExerciseSessionEntity>
+    @Query(
+        """
+        SELECT *
+        FROM exercise_sessions
+        WHERE syncStatus = 'PENDING'
+        ORDER BY startedAtEpochMillis ASC
+        LIMIT :limit
+        """,
+    )
+    suspend fun findPendingForSync(
+        limit: Int,
+    ): List<ExerciseSessionEntity>
 }

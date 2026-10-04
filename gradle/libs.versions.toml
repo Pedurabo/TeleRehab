@@ -1,4 +1,6 @@
 [versions]
+workManager = "2.12.0"
+androidxHilt = "1.4.0"
 room3 = "3.0.3"
 sqlite = "2.7.1"
 hilt = "2.60.1"
@@ -14,6 +16,9 @@ kotlin = "2.2.10"
 composeBom = "2024.09.00"
 
 [libraries]
+work-runtime = { module = "androidx.work:work-runtime", version.ref = "workManager" }
+hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "androidxHilt" }
+androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "androidxHilt" }
 room3-runtime = { module = "androidx.room3:room3-runtime", version.ref = "room3" }
 room3-compiler = { module = "androidx.room3:room3-compiler", version.ref = "room3" }
 sqlite-framework = { module = "androidx.sqlite:sqlite-framework", version.ref = "sqlite" }
