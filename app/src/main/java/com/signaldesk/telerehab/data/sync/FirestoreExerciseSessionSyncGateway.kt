@@ -1,6 +1,7 @@
 package com.signaldesk.telerehab.data.sync
 
 import com.google.firebase.FirebaseException
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.signaldesk.telerehab.domain.session.ExerciseSession
@@ -11,16 +12,28 @@ import javax.inject.Inject
 
 class FirestoreExerciseSessionSyncGateway @Inject constructor(
     private val firestore: FirebaseFirestore,
+    private val firebaseAuth: FirebaseAuth,
+    private val remoteMapper: ExerciseSessionRemoteMapper,
 ) : ExerciseSessionSyncGateway {
 
     override suspend fun upsertSession(
         session: ExerciseSession,
-    ): SessionSyncResult =
-        try {
+    ): SessionSyncResult {
+        val userId =
+            firebaseAuth.currentUser?.uid
+                ?: return SessionSyncResult.PERMANENT_FAILURE
+
+        if (session.patientId != userId) {
+            return SessionSyncResult.PERMANENT_FAILURE
+        }
+
+        return try {
             firestore
+                .collection(PATIENTS_COLLECTION)
+                .document(userId)
                 .collection(SESSIONS_COLLECTION)
                 .document(session.id)
-                .set(session.toRemoteDocument())
+                .set(remoteMapper.toDocument(session))
                 .await()
 
             SessionSyncResult.SUCCESS
@@ -29,17 +42,7 @@ class FirestoreExerciseSessionSyncGateway @Inject constructor(
         } catch (_: FirebaseException) {
             SessionSyncResult.RETRYABLE_FAILURE
         }
-
-    private fun ExerciseSession.toRemoteDocument(): Map<String, Any?> =
-        mapOf(
-            "id" to id,
-            "assignmentId" to assignmentId,
-            "patientId" to patientId,
-            "startedAtEpochMillis" to startedAt.toEpochMilli(),
-            "completedAtEpochMillis" to completedAt?.toEpochMilli(),
-            "sessionStatus" to status.name,
-            "syncStatus" to syncStatus.name,
-        )
+    }
 
     private fun FirebaseFirestoreException.toSyncResult(): SessionSyncResult =
         when (code) {
@@ -53,6 +56,7 @@ class FirestoreExerciseSessionSyncGateway @Inject constructor(
         }
 
     companion object {
+        private const val PATIENTS_COLLECTION = "patients"
         private const val SESSIONS_COLLECTION = "exerciseSessions"
     }
 }

@@ -1,0 +1,31 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /patients/{patientId}/exerciseSessions/{sessionId} {
+
+      allow read: if isSessionOwner(patientId);
+
+      allow create, update:
+        if isSessionOwner(patientId)
+        && request.resource.data.patientId == patientId
+        && request.resource.data.id == sessionId
+        && request.resource.data.keys().hasOnly([
+          'id',
+          'assignmentId',
+          'patientId',
+          'startedAtEpochMillis',
+          'completedAtEpochMillis',
+          'sessionStatus'
+        ]);
+
+      allow delete: if false;
+    }
+
+    function isSessionOwner(patientId) {
+      return request.auth != null
+        && request.auth.uid == patientId;
+    }
+  }
+}

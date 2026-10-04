@@ -18,6 +18,7 @@ kotlin = "2.2.10"
 composeBom = "2024.09.00"
 
 [libraries]
+firebase-auth = { module = "com.google.firebase:firebase-auth" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firestore = { module = "com.google.firebase:firebase-firestore" }
 work-runtime = { module = "androidx.work:work-runtime", version.ref = "workManager" }

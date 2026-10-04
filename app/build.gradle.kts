@@ -50,6 +50,7 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firestore)
+    implementation(libs.firebase.auth)
 implementation(libs.work.runtime)
     implementation(libs.hilt.work)
     ksp(libs.androidx.hilt.compiler)
