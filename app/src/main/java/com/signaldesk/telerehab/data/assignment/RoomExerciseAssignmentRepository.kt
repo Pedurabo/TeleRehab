@@ -20,4 +20,25 @@ class RoomExerciseAssignmentRepository @Inject constructor(
                 patientId = patientId,
             )
             .map(mapper::toDomain)
+
+    override suspend fun replaceForPatient(
+        patientId: String,
+        assignments: List<ExerciseAssignment>,
+    ) {
+        require(
+            assignments.all {
+                it.patientId == patientId
+            },
+        ) {
+            "Assignments must belong to the requested patient."
+        }
+
+        dao.replaceForPatient(
+            patientId = patientId,
+            assignments =
+                assignments.map(
+                    mapper::toEntity,
+                ),
+        )
+    }
 }

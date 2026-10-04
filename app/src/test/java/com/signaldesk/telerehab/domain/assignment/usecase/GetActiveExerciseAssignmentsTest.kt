@@ -79,5 +79,12 @@ class GetActiveExerciseAssignmentsTest {
 
             return assignments
         }
+
+        override suspend fun replaceForPatient(
+            patientId: String,
+            assignments: List<ExerciseAssignment>,
+        ) {
+            // Not used by GetActiveExerciseAssignments tests.
+        }
     }
 }

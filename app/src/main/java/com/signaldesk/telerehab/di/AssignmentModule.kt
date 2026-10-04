@@ -1,6 +1,8 @@
 package com.signaldesk.telerehab.di
 
 import com.signaldesk.telerehab.data.assignment.RoomExerciseAssignmentRepository
+import com.signaldesk.telerehab.data.assignment.remote.FirestoreExerciseAssignmentRemoteSource
+import com.signaldesk.telerehab.domain.assignment.ExerciseAssignmentRemoteSource
 import com.signaldesk.telerehab.domain.assignment.ExerciseAssignmentRepository
 import dagger.Binds
 import dagger.Module
@@ -17,4 +19,10 @@ abstract class AssignmentModule {
     abstract fun bindExerciseAssignmentRepository(
         implementation: RoomExerciseAssignmentRepository,
     ): ExerciseAssignmentRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindExerciseAssignmentRemoteSource(
+        implementation: FirestoreExerciseAssignmentRemoteSource,
+    ): ExerciseAssignmentRemoteSource
 }
