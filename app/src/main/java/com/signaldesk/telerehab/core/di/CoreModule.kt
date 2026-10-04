@@ -2,6 +2,8 @@ package com.signaldesk.telerehab.core.di
 
 import com.signaldesk.telerehab.core.time.AppClock
 import com.signaldesk.telerehab.core.time.SystemAppClock
+import com.signaldesk.telerehab.data.session.RoomExerciseSessionRepository
+import com.signaldesk.telerehab.domain.session.ExerciseSessionRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -17,4 +19,9 @@ abstract class CoreModule {
     abstract fun bindAppClock(
         implementation: SystemAppClock,
     ): AppClock
+    @Binds
+    @Singleton
+    abstract fun bindExerciseSessionRepository(
+        implementation: RoomExerciseSessionRepository,
+    ): ExerciseSessionRepository
 }

@@ -1,15 +1,14 @@
 package com.signaldesk.telerehab.core.database.dao
 
 import androidx.room3.Dao
-import androidx.room3.Insert
-import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
+import androidx.room3.Upsert
 import com.signaldesk.telerehab.core.database.entity.ExerciseSessionEntity
 
 @Dao
 interface ExerciseSessionDao {
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsert(session: ExerciseSessionEntity)
 
     @Query(
