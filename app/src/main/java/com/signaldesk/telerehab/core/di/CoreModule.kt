@@ -1,5 +1,7 @@
 package com.signaldesk.telerehab.core.di
 
+import com.signaldesk.telerehab.core.id.AppIdGenerator
+import com.signaldesk.telerehab.core.id.UuidAppIdGenerator
 import com.signaldesk.telerehab.core.time.AppClock
 import com.signaldesk.telerehab.core.time.SystemAppClock
 import com.signaldesk.telerehab.data.session.RoomExerciseSessionRepository
@@ -24,4 +26,9 @@ abstract class CoreModule {
     abstract fun bindExerciseSessionRepository(
         implementation: RoomExerciseSessionRepository,
     ): ExerciseSessionRepository
+    @Binds
+    @Singleton
+    abstract fun bindAppIdGenerator(
+        implementation: UuidAppIdGenerator,
+    ): AppIdGenerator
 }
