@@ -69,21 +69,41 @@ class CalculateKneeAngle @Inject constructor() {
             return null
         }
 
+        val width =
+            observation.imageWidth.toDouble()
+
+        val height =
+            observation.imageHeight.toDouble()
+
+        val hipX =
+            hip.x * width
+
+        val hipY =
+            hip.y * height
+
+        val kneeX =
+            knee.x * width
+
+        val kneeY =
+            knee.y * height
+
+        val ankleX =
+            ankle.x * width
+
+        val ankleY =
+            ankle.y * height
+
         val upperX =
-            hip.x.toDouble() -
-                knee.x.toDouble()
+            hipX - kneeX
 
         val upperY =
-            hip.y.toDouble() -
-                knee.y.toDouble()
+            hipY - kneeY
 
         val lowerX =
-            ankle.x.toDouble() -
-                knee.x.toDouble()
+            ankleX - kneeX
 
         val lowerY =
-            ankle.y.toDouble() -
-                knee.y.toDouble()
+            ankleY - kneeY
 
         val upperMagnitude =
             sqrt(
@@ -119,16 +139,12 @@ class CalculateKneeAngle @Inject constructor() {
                 1.0,
             )
 
-        val angleDegrees =
-            Math.toDegrees(
-                acos(
-                    cosine,
-                ),
-            )
-
         return KneeAngleMeasurement(
             side = side,
-            angleDegrees = angleDegrees,
+            angleDegrees =
+                Math.toDegrees(
+                    acos(cosine),
+                ),
             confidence = confidence,
         )
     }

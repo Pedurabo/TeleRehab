@@ -24,7 +24,14 @@ data class NormalizedPosePoint(
 data class PoseObservation(
     val timestampNanos: Long,
     val landmarks: Map<BodyLandmark, NormalizedPosePoint>,
-)
+    val imageWidth: Int = 1,
+    val imageHeight: Int = 1,
+) {
+    init {
+        require(imageWidth > 0)
+        require(imageHeight > 0)
+    }
+}
 
 data class PoseFrame(
     val width: Int,

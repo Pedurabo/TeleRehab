@@ -6,8 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.signaldesk.telerehab.ui.session.GuidedExerciseSessionScreen
 import com.signaldesk.telerehab.ui.session.GuidedSessionViewModel
 import com.signaldesk.telerehab.ui.theme.TeleRehabTheme
@@ -23,9 +23,7 @@ class DebugCameraVerificationActivity :
     override fun onCreate(
         savedInstanceState: Bundle?,
     ) {
-        super.onCreate(
-            savedInstanceState,
-        )
+        super.onCreate(savedInstanceState)
 
         setContent {
             TeleRehabTheme {
@@ -36,13 +34,23 @@ class DebugCameraVerificationActivity :
 
                 LaunchedEffect(
                     analysisState.framesAnalyzed,
+                    analysisState.lastLandmarkCount,
                 ) {
                     if (
                         analysisState.framesAnalyzed > 0
                     ) {
                         Log.i(
                             "TeleRehabPose",
-                            "TELEREHAB_FRAME_ANALYSIS_GREEN frames=${analysisState.framesAnalyzed}",
+                            "TELEREHAB_MLKIT_INFERENCE_GREEN frames=${analysisState.framesAnalyzed}",
+                        )
+                    }
+
+                    if (
+                        analysisState.lastLandmarkCount > 0
+                    ) {
+                        Log.i(
+                            "TeleRehabPose",
+                            "TELEREHAB_MLKIT_LANDMARKS_GREEN landmarks=${analysisState.lastLandmarkCount} leftAngle=${analysisState.leftKneeAngleDegrees} rightAngle=${analysisState.rightKneeAngleDegrees}",
                         )
                     }
                 }

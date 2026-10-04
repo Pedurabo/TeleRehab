@@ -1,6 +1,6 @@
 package com.signaldesk.telerehab.di
 
-import com.signaldesk.telerehab.data.analysis.NoOpPoseAnalysisEngine
+import com.signaldesk.telerehab.data.analysis.MlKitPoseAnalysisEngine
 import com.signaldesk.telerehab.domain.analysis.PoseAnalysisEngine
 import dagger.Binds
 import dagger.Module
@@ -15,6 +15,6 @@ abstract class AnalysisModule {
     @Binds
     @Singleton
     abstract fun bindPoseAnalysisEngine(
-        implementation: NoOpPoseAnalysisEngine,
+        implementation: MlKitPoseAnalysisEngine,
     ): PoseAnalysisEngine
 }
