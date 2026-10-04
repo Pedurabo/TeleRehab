@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
+import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
@@ -36,12 +37,16 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.signaldesk.telerehab.domain.analysis.PoseFrame
+import java.util.concurrent.Executors
 
 @Composable
 fun GuidedExerciseSessionScreen(
     exerciseTitle: String,
     targetRepetitions: Int,
     sessionId: String,
+    analysisState: GuidedSessionAnalysisState,
+    onPoseFrame: (PoseFrame) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context =
@@ -91,6 +96,8 @@ fun GuidedExerciseSessionScreen(
                 targetRepetitions = targetRepetitions,
                 sessionId = sessionId,
                 lifecycleOwner = lifecycleOwner,
+                analysisState = analysisState,
+                onPoseFrame = onPoseFrame,
             )
         } else {
             CameraPermissionContent(
@@ -110,6 +117,8 @@ private fun CameraSessionContent(
     targetRepetitions: Int,
     sessionId: String,
     lifecycleOwner: androidx.lifecycle.LifecycleOwner,
+    analysisState: GuidedSessionAnalysisState,
+    onPoseFrame: (PoseFrame) -> Unit,
 ) {
     val context =
         LocalContext.current
@@ -121,19 +130,46 @@ private fun CameraSessionContent(
             ).apply {
                 cameraSelector =
                     CameraSelector.DEFAULT_FRONT_CAMERA
+
+                setEnabledUseCases(
+                    CameraController.IMAGE_ANALYSIS,
+                )
             }
+        }
+
+    val analyzer =
+        remember(
+            onPoseFrame,
+        ) {
+            CameraPoseFrameAnalyzer(
+                onFrame = onPoseFrame,
+            )
+        }
+
+    val analysisExecutor =
+        remember {
+            Executors.newSingleThreadExecutor()
         }
 
     DisposableEffect(
         cameraController,
         lifecycleOwner,
+        analyzer,
+        analysisExecutor,
     ) {
         cameraController.bindToLifecycle(
             lifecycleOwner,
         )
 
+        cameraController.setImageAnalysisAnalyzer(
+            analysisExecutor,
+            analyzer,
+        )
+
         onDispose {
+            cameraController.clearImageAnalysisAnalyzer()
             cameraController.unbind()
+            analysisExecutor.shutdown()
         }
     }
 
@@ -221,7 +257,16 @@ private fun CameraSessionContent(
             )
 
             Text(
-                text = "Pose tracking foundation ready",
+                text =
+                    "Frames analyzed: ${analysisState.framesAnalyzed}",
+                color = Color.White,
+                style =
+                    MaterialTheme.typography.bodyMedium,
+            )
+
+            Text(
+                text =
+                    "Landmarks observed: ${analysisState.lastLandmarkCount}",
                 color = Color.White,
                 style =
                     MaterialTheme.typography.bodyMedium,

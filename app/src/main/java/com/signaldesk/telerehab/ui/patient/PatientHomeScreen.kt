@@ -22,11 +22,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.signaldesk.telerehab.domain.analysis.PoseFrame
 import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
 import com.signaldesk.telerehab.ui.session.GuidedExerciseSessionScreen
+import com.signaldesk.telerehab.ui.session.GuidedSessionAnalysisState
 
 @Composable
 fun PatientHomeScreen(
@@ -35,6 +37,8 @@ fun PatientHomeScreen(
     onAssignmentSelected: (ExerciseAssignment) -> Unit,
     onCloseAssignment: () -> Unit,
     onStartSession: () -> Unit,
+    guidedAnalysisState: GuidedSessionAnalysisState,
+    onPoseFrame: (PoseFrame) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -66,8 +70,13 @@ fun PatientHomeScreen(
                             state.selectedAssignment.targetRepetitions,
                         sessionId =
                             state.startedSessionId,
+                        analysisState =
+                            guidedAnalysisState,
+                        onPoseFrame =
+                            onPoseFrame,
                     )
                 }
+
                 state.selectedAssignment != null -> {
                     AssignmentDetailContent(
                         assignment = state.selectedAssignment,
@@ -83,7 +92,8 @@ fun PatientHomeScreen(
                     AssignmentListContent(
                         state = state,
                         onRefresh = onRefresh,
-                        onAssignmentSelected = onAssignmentSelected,
+                        onAssignmentSelected =
+                            onAssignmentSelected,
                     )
                 }
             }
@@ -98,8 +108,10 @@ private fun LoadingContent() {
             Modifier
                 .fillMaxSize()
                 .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+        horizontalAlignment =
+            Alignment.CenterHorizontally,
+        verticalArrangement =
+            Arrangement.Center,
     ) {
         CircularProgressIndicator()
 
@@ -108,8 +120,10 @@ private fun LoadingContent() {
         )
 
         Text(
-            text = "Loading your rehabilitation plan…",
-            style = MaterialTheme.typography.bodyLarge,
+            text =
+                "Loading your rehabilitation plan…",
+            style =
+                MaterialTheme.typography.bodyLarge,
         )
     }
 }
@@ -132,12 +146,14 @@ private fun AssignmentListContent(
 
         Text(
             text = "TeleRehab",
-            style = MaterialTheme.typography.headlineMedium,
+            style =
+                MaterialTheme.typography.headlineMedium,
         )
 
         Text(
             text = "Your rehabilitation plan",
-            style = MaterialTheme.typography.titleLarge,
+            style =
+                MaterialTheme.typography.titleLarge,
         )
 
         Spacer(
@@ -145,8 +161,10 @@ private fun AssignmentListContent(
         )
 
         Text(
-            text = "Your saved exercises remain available even when you are offline.",
-            style = MaterialTheme.typography.bodyMedium,
+            text =
+                "Your saved exercises remain available even when you are offline.",
+            style =
+                MaterialTheme.typography.bodyMedium,
         )
 
         Spacer(
@@ -154,13 +172,17 @@ private fun AssignmentListContent(
         )
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+            modifier =
+                Modifier.fillMaxWidth(),
+            horizontalArrangement =
+                Arrangement.SpaceBetween,
+            verticalAlignment =
+                Alignment.CenterVertically,
         ) {
             Text(
                 text = "Assigned exercises",
-                style = MaterialTheme.typography.titleMedium,
+                style =
+                    MaterialTheme.typography.titleMedium,
             )
 
             OutlinedButton(
@@ -185,7 +207,8 @@ private fun AssignmentListContent(
 
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodySmall,
+                style =
+                    MaterialTheme.typography.bodySmall,
             )
         }
 
@@ -196,8 +219,10 @@ private fun AssignmentListContent(
 
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
+                style =
+                    MaterialTheme.typography.bodySmall,
+                color =
+                    MaterialTheme.colorScheme.error,
             )
         }
 
@@ -210,20 +235,26 @@ private fun AssignmentListContent(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(
-                    modifier = Modifier.padding(20.dp),
+                    modifier =
+                        Modifier.padding(20.dp),
                 ) {
                     Text(
-                        text = "No active exercises yet",
-                        style = MaterialTheme.typography.titleMedium,
+                        text =
+                            "No active exercises yet",
+                        style =
+                            MaterialTheme.typography.titleMedium,
                     )
 
                     Spacer(
-                        modifier = Modifier.height(6.dp),
+                        modifier =
+                            Modifier.height(6.dp),
                     )
 
                     Text(
-                        text = "When your rehabilitation program is assigned, it will appear here.",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text =
+                            "When your rehabilitation program is assigned, it will appear here.",
+                        style =
+                            MaterialTheme.typography.bodyMedium,
                     )
                 }
             }
@@ -258,15 +289,18 @@ private fun AssignmentCard(
     onOpen: () -> Unit,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier =
+            Modifier.fillMaxWidth(),
         onClick = onOpen,
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier =
+                Modifier.padding(20.dp),
         ) {
             Text(
                 text = assignment.title,
-                style = MaterialTheme.typography.titleMedium,
+                style =
+                    MaterialTheme.typography.titleMedium,
             )
 
             Spacer(
@@ -274,8 +308,10 @@ private fun AssignmentCard(
             )
 
             Text(
-                text = "${assignment.targetRepetitions} repetitions",
-                style = MaterialTheme.typography.bodyMedium,
+                text =
+                    "${assignment.targetRepetitions} repetitions",
+                style =
+                    MaterialTheme.typography.bodyMedium,
             )
 
             Spacer(
@@ -284,7 +320,8 @@ private fun AssignmentCard(
 
             Text(
                 text = assignment.instructions,
-                style = MaterialTheme.typography.bodyMedium,
+                style =
+                    MaterialTheme.typography.bodyMedium,
             )
         }
     }
@@ -323,7 +360,8 @@ private fun AssignmentDetailContent(
 
         Text(
             text = assignment.title,
-            style = MaterialTheme.typography.headlineSmall,
+            style =
+                MaterialTheme.typography.headlineSmall,
         )
 
         Spacer(
@@ -332,7 +370,8 @@ private fun AssignmentDetailContent(
 
         Text(
             text = "Instructions",
-            style = MaterialTheme.typography.titleMedium,
+            style =
+                MaterialTheme.typography.titleMedium,
         )
 
         Spacer(
@@ -341,7 +380,8 @@ private fun AssignmentDetailContent(
 
         Text(
             text = assignment.instructions,
-            style = MaterialTheme.typography.bodyLarge,
+            style =
+                MaterialTheme.typography.bodyLarge,
         )
 
         Spacer(
@@ -355,8 +395,10 @@ private fun AssignmentDetailContent(
         )
 
         Text(
-            text = "Target: ${assignment.targetRepetitions} repetitions",
-            style = MaterialTheme.typography.titleMedium,
+            text =
+                "Target: ${assignment.targetRepetitions} repetitions",
+            style =
+                MaterialTheme.typography.titleMedium,
         )
 
         Spacer(
@@ -364,7 +406,8 @@ private fun AssignmentDetailContent(
         )
 
         Button(
-            modifier = Modifier.fillMaxWidth(),
+            modifier =
+                Modifier.fillMaxWidth(),
             onClick = onStartSession,
             enabled =
                 !isStartingSession &&
@@ -391,8 +434,10 @@ private fun AssignmentDetailContent(
             )
 
             Text(
-                text = "Your exercise session is ready for the guided camera step.",
-                style = MaterialTheme.typography.bodyMedium,
+                text =
+                    "Your exercise session is ready for the guided camera step.",
+                style =
+                    MaterialTheme.typography.bodyMedium,
             )
         }
 
@@ -403,8 +448,10 @@ private fun AssignmentDetailContent(
 
             Text(
                 text = message,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium,
+                color =
+                    MaterialTheme.colorScheme.error,
+                style =
+                    MaterialTheme.typography.bodyMedium,
             )
         }
     }
