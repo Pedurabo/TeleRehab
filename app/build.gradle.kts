@@ -45,7 +45,10 @@ dependencies {
 
 
 
-    implementation(libs.work.runtime)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firestore)
+implementation(libs.work.runtime)
     implementation(libs.hilt.work)
     ksp(libs.androidx.hilt.compiler)
 implementation(libs.room3.runtime)

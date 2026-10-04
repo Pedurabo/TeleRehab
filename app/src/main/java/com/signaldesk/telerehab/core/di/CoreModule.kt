@@ -5,7 +5,7 @@ import com.signaldesk.telerehab.core.id.UuidAppIdGenerator
 import com.signaldesk.telerehab.core.time.AppClock
 import com.signaldesk.telerehab.core.time.SystemAppClock
 import com.signaldesk.telerehab.data.session.RoomExerciseSessionRepository
-import com.signaldesk.telerehab.data.sync.DeferredExerciseSessionSyncGateway
+import com.signaldesk.telerehab.data.sync.FirestoreExerciseSessionSyncGateway
 import com.signaldesk.telerehab.domain.session.ExerciseSessionRepository
 import com.signaldesk.telerehab.domain.session.sync.PendingExerciseSessionSource
 import com.signaldesk.telerehab.domain.session.sync.ExerciseSessionSyncGateway
@@ -42,6 +42,6 @@ abstract class CoreModule {
     @Binds
     @Singleton
     abstract fun bindExerciseSessionSyncGateway(
-        implementation: DeferredExerciseSessionSyncGateway,
+        implementation: FirestoreExerciseSessionSyncGateway,
     ): ExerciseSessionSyncGateway
 }
