@@ -1,5 +1,8 @@
 package com.signaldesk.telerehab.core.di
 
+import com.signaldesk.telerehab.data.auth.FirebaseAuthSession
+import com.signaldesk.telerehab.domain.auth.AuthSession
+
 import com.signaldesk.telerehab.core.id.AppIdGenerator
 import com.signaldesk.telerehab.core.id.UuidAppIdGenerator
 import com.signaldesk.telerehab.core.time.AppClock
@@ -44,4 +47,10 @@ abstract class CoreModule {
     abstract fun bindExerciseSessionSyncGateway(
         implementation: FirestoreExerciseSessionSyncGateway,
     ): ExerciseSessionSyncGateway
+
+    @Binds
+    @Singleton
+    abstract fun bindAuthSession(
+        implementation: FirebaseAuthSession,
+    ): AuthSession
 }

@@ -1,4 +1,5 @@
 [versions]
+coroutines = "1.11.0"
 googleServices = "4.5.0"
 firebaseBom = "34.19.0"
 workManager = "2.12.0"
@@ -18,6 +19,7 @@ kotlin = "2.2.10"
 composeBom = "2024.09.00"
 
 [libraries]
+coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firestore = { module = "com.google.firebase:firebase-firestore" }

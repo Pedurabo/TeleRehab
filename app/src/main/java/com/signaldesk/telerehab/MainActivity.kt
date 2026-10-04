@@ -14,10 +14,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.lifecycleScope
 import com.signaldesk.telerehab.core.time.AppClock
+import com.signaldesk.telerehab.domain.auth.EnsureSignedIn
 import com.signaldesk.telerehab.ui.theme.TeleRehabTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -25,9 +28,16 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var appClock: AppClock
 
+
+    @Inject
+    lateinit var ensureSignedIn: EnsureSignedIn
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+
+        lifecycleScope.launch {
+            ensureSignedIn()
+        }
         val startedAt = appClock.now()
 
         enableEdgeToEdge()
