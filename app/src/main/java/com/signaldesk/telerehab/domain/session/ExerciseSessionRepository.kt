@@ -9,4 +9,8 @@ interface ExerciseSessionRepository {
     suspend fun findById(
         sessionId: String,
     ): ExerciseSession?
+    suspend fun findRecentCompletedByPatient(
+        patientId: String,
+        limit: Int,
+    ): List<ExerciseSession>
 }

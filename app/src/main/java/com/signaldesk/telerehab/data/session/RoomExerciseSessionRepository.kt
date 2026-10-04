@@ -19,4 +19,14 @@ class RoomExerciseSessionRepository @Inject constructor(
         sessionId: String,
     ): ExerciseSession? =
         dao.findById(sessionId)?.toDomain()
+    override suspend fun findRecentCompletedByPatient(
+        patientId: String,
+        limit: Int,
+    ): List<ExerciseSession> =
+        dao.findRecentCompletedByPatient(
+            patientId = patientId,
+            limit = limit,
+        ).map { entity ->
+            entity.toDomain()
+        }
 }

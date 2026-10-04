@@ -77,6 +77,11 @@ class StartExerciseSessionTest {
         override suspend fun findById(
             sessionId: String,
         ): ExerciseSession? = null
+
+        override suspend fun findRecentCompletedByPatient(
+            patientId: String,
+            limit: Int,
+        ): List<ExerciseSession> = emptyList()
     }
     @Test(expected = IllegalArgumentException::class)
     fun `blank assignment id is rejected`() {

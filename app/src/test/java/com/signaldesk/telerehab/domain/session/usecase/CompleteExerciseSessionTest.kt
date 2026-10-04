@@ -218,6 +218,11 @@ class CompleteExerciseSessionTest {
             current?.takeIf {
                 it.id == sessionId
             }
+
+        override suspend fun findRecentCompletedByPatient(
+            patientId: String,
+            limit: Int,
+        ): List<ExerciseSession> = emptyList()
     }
     @Test
     fun `completion before start time is rejected without persisting`() =

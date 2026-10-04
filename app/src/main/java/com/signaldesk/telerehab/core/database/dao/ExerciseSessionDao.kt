@@ -22,4 +22,18 @@ interface ExerciseSessionDao {
     suspend fun findById(
         sessionId: String,
     ): ExerciseSessionEntity?
+    @Query(
+        """
+        SELECT *
+        FROM exercise_sessions
+        WHERE patientId = :patientId
+          AND sessionStatus = 'COMPLETED'
+        ORDER BY completedAtEpochMillis DESC
+        LIMIT :limit
+        """,
+    )
+    suspend fun findRecentCompletedByPatient(
+        patientId: String,
+        limit: Int,
+    ): List<ExerciseSessionEntity>
 }
