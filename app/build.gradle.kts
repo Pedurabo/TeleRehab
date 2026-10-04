@@ -7,6 +7,9 @@ alias(libs.plugins.android.application)
 }
 
 android {
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
     namespace = "com.signaldesk.telerehab"
     compileSdk = 37
 
@@ -40,7 +43,11 @@ android {
 
 dependencies {
 
-    implementation(libs.hilt.android)
+
+    implementation(libs.room3.runtime)
+    implementation(libs.sqlite.framework)
+    ksp(libs.room3.compiler)
+implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
