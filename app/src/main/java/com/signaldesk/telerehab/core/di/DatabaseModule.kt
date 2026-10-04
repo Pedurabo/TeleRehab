@@ -1,5 +1,7 @@
 package com.signaldesk.telerehab.core.di
 
+import com.signaldesk.telerehab.data.assignment.local.ExerciseAssignmentDao
+
 import android.content.Context
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
@@ -26,6 +28,9 @@ object DatabaseModule {
             name = "telerehab.db",
         )
             .setDriver(AndroidSQLiteDriver())
+            .addMigrations(
+                TeleRehabDatabase.MIGRATION_1_2,
+            )
             .build()
 
     @Provides
@@ -33,4 +38,9 @@ object DatabaseModule {
         database: TeleRehabDatabase,
     ): ExerciseSessionDao =
         database.exerciseSessionDao()
+    @Provides
+    fun provideExerciseAssignmentDao(
+        database: TeleRehabDatabase,
+    ): ExerciseAssignmentDao =
+        database.exerciseAssignmentDao()
 }
