@@ -4,5 +4,9 @@
         <activity
             android:name=".DebugSyncVerificationActivity"
             android:exported="true" />
+
+        <activity
+            android:name=".DebugScheduledSyncVerificationActivity"
+            android:exported="true" />
     </application>
 </manifest>

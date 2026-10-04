@@ -1,5 +1,7 @@
 package com.signaldesk.telerehab.domain.session.usecase
 
+import com.signaldesk.telerehab.domain.session.sync.SessionSyncScheduler
+
 import com.signaldesk.telerehab.core.time.AppClock
 import com.signaldesk.telerehab.domain.session.ExerciseSession
 import com.signaldesk.telerehab.domain.session.ExerciseSessionRepository
@@ -8,6 +10,8 @@ import com.signaldesk.telerehab.domain.session.SyncStatus
 import javax.inject.Inject
 
 class CompleteExerciseSession @Inject constructor(
+    private val sessionSyncScheduler: SessionSyncScheduler = SessionSyncScheduler.NoOp,
+
     private val repository: ExerciseSessionRepository,
     private val clock: AppClock,
 ) {
@@ -45,6 +49,8 @@ class CompleteExerciseSession @Inject constructor(
             )
 
         repository.save(completed)
+
+        sessionSyncScheduler.requestSync()
 
         return completed
     }
