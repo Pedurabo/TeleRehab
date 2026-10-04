@@ -2,6 +2,8 @@ package com.signaldesk.telerehab.ui.session
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.signaldesk.telerehab.domain.analysis.CalculateKneeAngle
+import com.signaldesk.telerehab.domain.analysis.KneeSide
 import com.signaldesk.telerehab.domain.analysis.PoseAnalysisEngine
 import com.signaldesk.telerehab.domain.analysis.PoseFrame
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,12 +16,15 @@ data class GuidedSessionAnalysisState(
     val framesSubmitted: Long = 0,
     val framesAnalyzed: Long = 0,
     val lastLandmarkCount: Int = 0,
+    val leftKneeAngleDegrees: Double? = null,
+    val rightKneeAngleDegrees: Double? = null,
     val isAnalyzing: Boolean = false,
 )
 
 @HiltViewModel
 class GuidedSessionViewModel @Inject constructor(
     private val poseAnalysisEngine: PoseAnalysisEngine,
+    private val calculateKneeAngle: CalculateKneeAngle,
 ) : ViewModel() {
 
     private val _analysisState =
@@ -59,12 +64,30 @@ class GuidedSessionViewModel @Inject constructor(
                         frame = frame,
                     )
 
+                val leftKnee =
+                    calculateKneeAngle.invoke(
+                        observation = observation,
+                        side = KneeSide.LEFT,
+                    )
+
+                val rightKnee =
+                    calculateKneeAngle.invoke(
+                        observation = observation,
+                        side = KneeSide.RIGHT,
+                    )
+
                 _analysisState.value =
                     _analysisState.value.copy(
                         framesAnalyzed =
-                            _analysisState.value.framesAnalyzed + 1,
+                            _analysisState
+                                .value
+                                .framesAnalyzed + 1,
                         lastLandmarkCount =
                             observation.landmarks.size,
+                        leftKneeAngleDegrees =
+                            leftKnee?.angleDegrees,
+                        rightKneeAngleDegrees =
+                            rightKnee?.angleDegrees,
                         isAnalyzing = false,
                     )
             } catch (_: Throwable) {

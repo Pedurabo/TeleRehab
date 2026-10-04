@@ -273,6 +273,30 @@ private fun CameraSessionContent(
             )
 
             Text(
+                text =
+                    analysisState.leftKneeAngleDegrees
+                        ?.let {
+                            "Left knee angle: ${it.toInt()}°"
+                        }
+                        ?: "Left knee angle: waiting for landmarks",
+                color = Color.White,
+                style =
+                    MaterialTheme.typography.bodyMedium,
+            )
+
+            Text(
+                text =
+                    analysisState.rightKneeAngleDegrees
+                        ?.let {
+                            "Right knee angle: ${it.toInt()}°"
+                        }
+                        ?: "Right knee angle: waiting for landmarks",
+                color = Color.White,
+                style =
+                    MaterialTheme.typography.bodyMedium,
+            )
+
+            Text(
                 text = "Session ${sessionId.take(8)}",
                 color = Color.White,
                 style =
