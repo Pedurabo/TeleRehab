@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
+import com.signaldesk.telerehab.ui.session.GuidedExerciseSessionScreen
 
 @Composable
 fun PatientHomeScreen(
@@ -56,6 +57,17 @@ fun PatientHomeScreen(
                     LoadingContent()
                 }
 
+                state.startedSessionId != null &&
+                    state.selectedAssignment != null -> {
+                    GuidedExerciseSessionScreen(
+                        exerciseTitle =
+                            state.selectedAssignment.title,
+                        targetRepetitions =
+                            state.selectedAssignment.targetRepetitions,
+                        sessionId =
+                            state.startedSessionId,
+                    )
+                }
                 state.selectedAssignment != null -> {
                     AssignmentDetailContent(
                         assignment = state.selectedAssignment,
