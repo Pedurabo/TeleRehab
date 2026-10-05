@@ -22,6 +22,9 @@ data class TherapistHomeUiState(
     val selectedPatientId: String? = null,
     val assignments: List<ExerciseAssignment> = emptyList(),
     val recentSessions: List<ExerciseSession> = emptyList(),
+    val completedSessionCount: Int = 0,
+    val latestCompletedRepetitions: Int? = null,
+    val repetitionTrend: Int? = null,
     val isLoading: Boolean = true,
     val isSavingAssignment: Boolean = false,
     val saveMessage: String? = null,
@@ -99,11 +102,34 @@ class TherapistHomeViewModel @Inject constructor(
                         patientId = patientId,
                     )
 
+                val latestRepetitions =
+                    recentSessions
+                        .firstOrNull()
+                        ?.metrics
+                        ?.completedRepetitions
+
+                val previousRepetitions =
+                    recentSessions
+                        .getOrNull(1)
+                        ?.metrics
+                        ?.completedRepetitions
+
                 _uiState.value =
                     _uiState.value.copy(
                         selectedPatientId = patientId,
                         assignments = assignments,
                         recentSessions = recentSessions,
+                        completedSessionCount = recentSessions.size,
+                        latestCompletedRepetitions = latestRepetitions,
+                        repetitionTrend =
+                            if (
+                                latestRepetitions != null &&
+                                previousRepetitions != null
+                            ) {
+                                latestRepetitions - previousRepetitions
+                            } else {
+                                null
+                            },
                         errorMessage = null,
                     )
             } catch (error: Throwable) {
