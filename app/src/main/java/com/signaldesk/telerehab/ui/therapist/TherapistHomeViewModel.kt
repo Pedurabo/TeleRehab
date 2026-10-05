@@ -12,6 +12,7 @@ import com.signaldesk.telerehab.domain.therapist.GetPatientCompletedSessionsSinc
 import com.signaldesk.telerehab.domain.therapist.SavePatientAssignmentForTherapist
 import com.signaldesk.telerehab.domain.therapist.TherapistPatient
 import com.signaldesk.telerehab.domain.therapist.WeeklyAdherenceCalculator
+import com.signaldesk.telerehab.domain.therapist.WeeklyAdherenceStatus
 import com.signaldesk.telerehab.domain.session.ExerciseSession
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -29,6 +30,7 @@ data class TherapistHomeUiState(
     val weeklyCompletedSessionCount: Int = 0,
     val weeklyTargetSessionCount: Int? = null,
     val weeklyAdherencePercent: Int? = null,
+    val weeklyAdherenceStatus: WeeklyAdherenceStatus? = null,
     val latestCompletedRepetitions: Int? = null,
     val repetitionTrend: Int? = null,
     val isLoading: Boolean = true,
@@ -157,7 +159,8 @@ class TherapistHomeViewModel @Inject constructor(
                         completedSessionCount = recentSessions.size,
                         weeklyCompletedSessionCount = weeklySessions.size,
                         weeklyTargetSessionCount = weeklyTarget,
-                        weeklyAdherencePercent = weeklyAdherence,
+                        weeklyAdherencePercent = weeklyAdherence?.percent,
+                        weeklyAdherenceStatus = weeklyAdherence?.status,
                         latestCompletedRepetitions = latestRepetitions,
                         repetitionTrend =
                             if (
@@ -247,6 +250,7 @@ class TherapistHomeViewModel @Inject constructor(
                 weeklyCompletedSessionCount = 0,
                 weeklyTargetSessionCount = null,
                 weeklyAdherencePercent = null,
+                weeklyAdherenceStatus = null,
                 latestCompletedRepetitions = null,
                 repetitionTrend = null,
                 saveMessage = null,

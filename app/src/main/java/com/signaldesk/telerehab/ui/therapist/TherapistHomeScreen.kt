@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
+import com.signaldesk.telerehab.domain.therapist.WeeklyAdherenceStatus
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
@@ -169,6 +170,24 @@ fun TherapistHomeScreen(
                                 state.weeklyAdherencePercent
                                     ?.let { "$it%" }
                                     ?: "-"
+                            }",
+                        )
+
+                        Text(
+                            "Status: ${
+                                when (state.weeklyAdherenceStatus) {
+                                    WeeklyAdherenceStatus.NOT_STARTED ->
+                                        "Not started"
+
+                                    WeeklyAdherenceStatus.IN_PROGRESS ->
+                                        "In progress"
+
+                                    WeeklyAdherenceStatus.COMPLETE ->
+                                        "Complete"
+
+                                    null ->
+                                        "-"
+                                }
                             }",
                         )
 

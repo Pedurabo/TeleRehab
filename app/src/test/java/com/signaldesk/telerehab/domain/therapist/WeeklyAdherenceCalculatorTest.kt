@@ -9,46 +9,62 @@ class WeeklyAdherenceCalculatorTest {
         WeeklyAdherenceCalculator()
 
     @Test
-    fun zeroCompletedSessionsReturnsZeroPercent() {
-        assertEquals(
-            0,
+    fun zeroCompletedSessionsReturnsNotStarted() {
+        val result =
             calculator.calculate(
                 completedSessions = 0,
                 targetSessions = 3,
-            ),
+            )
+
+        assertEquals(0, result.percent)
+        assertEquals(
+            WeeklyAdherenceStatus.NOT_STARTED,
+            result.status,
         )
     }
 
     @Test
-    fun partialAdherenceUsesWholePercentage() {
-        assertEquals(
-            66,
+    fun partialAdherenceReturnsInProgress() {
+        val result =
             calculator.calculate(
                 completedSessions = 2,
                 targetSessions = 3,
-            ),
+            )
+
+        assertEquals(66, result.percent)
+        assertEquals(
+            WeeklyAdherenceStatus.IN_PROGRESS,
+            result.status,
         )
     }
 
     @Test
-    fun meetingTargetReturnsOneHundredPercent() {
-        assertEquals(
-            100,
+    fun meetingTargetReturnsComplete() {
+        val result =
             calculator.calculate(
                 completedSessions = 3,
                 targetSessions = 3,
-            ),
+            )
+
+        assertEquals(100, result.percent)
+        assertEquals(
+            WeeklyAdherenceStatus.COMPLETE,
+            result.status,
         )
     }
 
     @Test
-    fun exceedingTargetIsCappedAtOneHundredPercent() {
-        assertEquals(
-            100,
+    fun exceedingTargetStaysCompleteAndCapsPercent() {
+        val result =
             calculator.calculate(
                 completedSessions = 5,
                 targetSessions = 3,
-            ),
+            )
+
+        assertEquals(100, result.percent)
+        assertEquals(
+            WeeklyAdherenceStatus.COMPLETE,
+            result.status,
         )
     }
 }

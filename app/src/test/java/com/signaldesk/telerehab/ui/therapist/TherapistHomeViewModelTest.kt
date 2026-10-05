@@ -19,6 +19,7 @@ import com.signaldesk.telerehab.domain.therapist.TherapistExerciseSessionRemoteS
 import com.signaldesk.telerehab.domain.therapist.TherapistPatient
 import com.signaldesk.telerehab.domain.therapist.TherapistPatientRepository
 import com.signaldesk.telerehab.domain.therapist.WeeklyAdherenceCalculator
+import com.signaldesk.telerehab.domain.therapist.WeeklyAdherenceStatus
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -139,6 +140,10 @@ class TherapistHomeViewModelTest {
             assertEquals(2, state.weeklyCompletedSessionCount)
             assertEquals(3, state.weeklyTargetSessionCount)
             assertEquals(66, state.weeklyAdherencePercent)
+            assertEquals(
+                WeeklyAdherenceStatus.IN_PROGRESS,
+                state.weeklyAdherenceStatus,
+            )
         }
 
     private fun completedSession(
