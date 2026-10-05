@@ -3,9 +3,28 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    match /users/{userId} {
+      allow read:
+        if request.auth != null
+        && request.auth.uid == userId;
+
+      allow write:
+        if false;
+    }
+
+    match /therapists/{therapistId}/patients/{patientId} {
+      allow read:
+        if request.auth != null
+        && request.auth.uid == therapistId;
+
+      allow write:
+        if false;
+    }
+
     match /patients/{patientId}/exerciseSessions/{sessionId} {
       allow read:
-        if isPatientOwner(patientId);
+        if isPatientOwner(patientId)
+        || isAssignedTherapist(patientId);
 
       allow create, update:
         if isPatientOwner(patientId)
@@ -29,17 +48,35 @@ service cloud.firestore {
 
     match /patients/{patientId}/exerciseAssignments/{assignmentId} {
       allow read:
-        if isPatientOwner(patientId);
+        if isPatientOwner(patientId)
+        || isAssignedTherapist(patientId);
 
-      // Assignment authoring belongs to the therapist workflow.
-      // Patient clients are intentionally read-only.
-      allow create, update, delete:
+      allow create, update:
+        if isAssignedTherapist(patientId)
+        && request.resource.data.patientId == patientId
+        && request.resource.data.id == assignmentId;
+
+      allow delete:
         if false;
     }
 
     function isPatientOwner(patientId) {
       return request.auth != null
         && request.auth.uid == patientId;
+    }
+
+    function isTherapist() {
+      return request.auth != null
+        && get(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        ).data.role == 'THERAPIST';
+    }
+
+    function isAssignedTherapist(patientId) {
+      return isTherapist()
+        && exists(
+          /databases/$(database)/documents/therapists/$(request.auth.uid)/patients/$(patientId)
+        );
     }
   }
 }

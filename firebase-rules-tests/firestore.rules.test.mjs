@@ -26,6 +26,8 @@ const testEnv = await initializeTestEnvironment({
 const ownerUid = "patient-owner";
 const otherUid = "patient-other";
 const sessionId = "session-123";
+const therapistUid = "therapist-assigned";
+const unassignedTherapistUid = "therapist-unassigned";
 
 const validDocument = {
   id: sessionId,
