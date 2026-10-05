@@ -25,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
 
 @Composable
@@ -82,7 +84,7 @@ fun TherapistHomeScreen(
                         },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(patient.patientId)
+                        Text(patient.patientId.toPatientLabel())
                     }
                 }
         }
@@ -93,7 +95,7 @@ fun TherapistHomeScreen(
                 style = MaterialTheme.typography.titleLarge,
             )
 
-            Text(patientId)
+            Text(patientId.toPatientLabel())
 
             Text(
                 text = "Assignments",
@@ -141,7 +143,7 @@ fun TherapistHomeScreen(
                                 style = MaterialTheme.typography.titleSmall,
                             )
 
-                            Text("Completed: ${session.completedAt}")
+                            Text("Completed: ${session.completedAt.toDisplayDateTime()}")
 
                             session.metrics?.let { metrics ->
                                 Text(
@@ -350,3 +352,20 @@ private fun AssignmentEditor(
         }
     }
 }
+
+
+private fun String.toPatientLabel(): String =
+    if (length > 10) {
+        "Patient ${take(6)}..."
+    } else {
+        "Patient $this"
+    }
+
+private val sessionDateFormatter =
+    DateTimeFormatter.ofPattern("MMM d, yyyy - h:mm a")
+
+private fun java.time.Instant?.toDisplayDateTime(): String =
+    this
+        ?.atZone(ZoneId.systemDefault())
+        ?.format(sessionDateFormatter)
+        ?: "Unknown"
