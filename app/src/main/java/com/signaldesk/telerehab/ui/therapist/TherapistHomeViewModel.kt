@@ -3,12 +3,15 @@ package com.signaldesk.telerehab.ui.therapist
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
+import com.signaldesk.telerehab.domain.assignment.ExerciseAssignmentStatus
 import com.signaldesk.telerehab.domain.auth.EnsureSignedIn
+import com.signaldesk.telerehab.domain.therapist.AddPatientForTherapist
 import com.signaldesk.telerehab.domain.therapist.GetAssignedPatients
 import com.signaldesk.telerehab.domain.therapist.AssignmentWeeklyAdherence
 import com.signaldesk.telerehab.domain.therapist.CurrentWeekStartProvider
 import com.signaldesk.telerehab.domain.therapist.GetPatientAssignmentsForTherapist
 import com.signaldesk.telerehab.domain.therapist.GetPatientRecentSessionsForTherapist
+import com.signaldesk.telerehab.domain.therapist.PatientCredentials
 import com.signaldesk.telerehab.domain.therapist.GetPatientCompletedSessionsSinceForTherapist
 import com.signaldesk.telerehab.domain.therapist.SavePatientAssignmentForTherapist
 import com.signaldesk.telerehab.domain.therapist.TherapistPatient
@@ -24,6 +27,11 @@ import kotlinx.coroutines.launch
 data class TherapistHomeUiState(
     val therapistId: String? = null,
     val patients: List<TherapistPatient> = emptyList(),
+    val newPatientEmail: String = "",
+    val newPatientDisplayName: String = "",
+    val isAddingPatient: Boolean = false,
+    val addPatientMessage: String? = null,
+    val generatedPatientCredentials: PatientCredentials? = null,
     val selectedPatientId: String? = null,
     val assignments: List<ExerciseAssignment> = emptyList(),
     val recentSessions: List<ExerciseSession> = emptyList(),
@@ -41,6 +49,7 @@ data class TherapistHomeUiState(
 class TherapistHomeViewModel @Inject constructor(
     private val ensureSignedIn: EnsureSignedIn,
     private val getAssignedPatients: GetAssignedPatients,
+    private val addPatientForTherapist: AddPatientForTherapist,
     private val getPatientAssignments: GetPatientAssignmentsForTherapist,
     private val getPatientRecentSessions: GetPatientRecentSessionsForTherapist,
     private val getPatientCompletedSessionsSince:
@@ -86,6 +95,95 @@ class TherapistHomeViewModel @Inject constructor(
                         errorMessage =
                             error.message
                                 ?: "Unable to load therapist patients.",
+                    )
+            }
+        }
+    }
+
+    fun updateNewPatientEmail(
+        value: String,
+    ) {
+        _uiState.value =
+            _uiState.value.copy(
+                newPatientEmail = value,
+                addPatientMessage = null,
+            )
+    }
+
+    fun updateNewPatientDisplayName(
+        value: String,
+    ) {
+        _uiState.value =
+            _uiState.value.copy(
+                newPatientDisplayName = value,
+                addPatientMessage = null,
+            )
+    }
+
+    fun addPatient() {
+        val state =
+            _uiState.value
+
+        val therapistId =
+            state.therapistId
+                ?: return
+
+        val email =
+            state.newPatientEmail.trim()
+
+        if (email.isBlank()) {
+            _uiState.value =
+                state.copy(
+                    errorMessage = "Patient email is required.",
+                )
+            return
+        }
+
+        if (state.isAddingPatient) {
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                _uiState.value =
+                    _uiState.value.copy(
+                        isAddingPatient = true,
+                        errorMessage = null,
+                        addPatientMessage = null,
+                        generatedPatientCredentials = null,
+                    )
+
+                val credentials =
+                    addPatientForTherapist(
+                        therapistId = therapistId,
+                        email = email,
+                        displayName =
+                            state.newPatientDisplayName
+                                .trim()
+                                .takeIf { it.isNotBlank() },
+                    )
+
+                val patients =
+                    getAssignedPatients(
+                        therapistId = therapistId,
+                    )
+
+                _uiState.value =
+                    _uiState.value.copy(
+                        patients = patients,
+                        newPatientEmail = "",
+                        newPatientDisplayName = "",
+                        isAddingPatient = false,
+                        addPatientMessage = "Patient account created.",
+                        generatedPatientCredentials = credentials,
+                    )
+            } catch (error: Throwable) {
+                _uiState.value =
+                    _uiState.value.copy(
+                        isAddingPatient = false,
+                        errorMessage =
+                            error.message
+                                ?: "Unable to create patient account.",
                     )
             }
         }
@@ -188,6 +286,75 @@ class TherapistHomeViewModel @Inject constructor(
                         errorMessage =
                             error.message
                                 ?: "Unable to load patient assignments.",
+                    )
+            }
+        }
+    }
+
+    fun createKneeFlexionAssignment() {
+        val state =
+            _uiState.value
+
+        val therapistId =
+            state.therapistId
+                ?: return
+
+        val patientId =
+            state.selectedPatientId
+                ?: return
+
+        if (state.isSavingAssignment) {
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                _uiState.value =
+                    _uiState.value.copy(
+                        isSavingAssignment = true,
+                        errorMessage = null,
+                        saveMessage = null,
+                    )
+
+                val assignment =
+                    ExerciseAssignment(
+                        id = "knee-flexion-test",
+                        patientId = patientId,
+                        exerciseId = "knee-flexion",
+                        title = "Knee Flexion",
+                        instructions =
+                            "Slowly bend and straighten your knee while following the camera guidance.",
+                        targetRepetitions = 10,
+                        targetSessionsPerWeek = 3,
+                        flexedAtOrBelowDegrees = 90.0,
+                        extendedAtOrAboveDegrees = 160.0,
+                        status = ExerciseAssignmentStatus.ACTIVE,
+                    )
+
+                savePatientAssignment(
+                    therapistId = therapistId,
+                    assignment = assignment,
+                )
+
+                val assignments =
+                    getPatientAssignments(
+                        therapistId = therapistId,
+                        patientId = patientId,
+                    )
+
+                _uiState.value =
+                    _uiState.value.copy(
+                        assignments = assignments,
+                        isSavingAssignment = false,
+                        saveMessage = "Assignment created.",
+                    )
+            } catch (error: Throwable) {
+                _uiState.value =
+                    _uiState.value.copy(
+                        isSavingAssignment = false,
+                        errorMessage =
+                            error.message
+                                ?: "Unable to create assignment.",
                     )
             }
         }

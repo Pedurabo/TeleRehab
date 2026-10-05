@@ -1,8 +1,9 @@
-﻿package com.signaldesk.telerehab.ui.auth
+package com.signaldesk.telerehab.ui.auth
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
@@ -14,8 +15,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun TherapistSignInScreen(
-    state: TherapistSignInUiState,
+fun PatientSignInScreen(
+    state: PatientSignInUiState,
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
     onSignIn: () -> Unit,
@@ -29,11 +30,12 @@ fun TherapistSignInScreen(
         verticalArrangement =
             Arrangement.spacedBy(16.dp),
     ) {
-        Text("Therapist sign in")
+        Text("Patient sign in")
 
         OutlinedTextField(
             value = state.email,
             onValueChange = onEmailChanged,
+            modifier = Modifier.fillMaxWidth(),
             label = {
                 Text("Email")
             },
@@ -43,6 +45,7 @@ fun TherapistSignInScreen(
         OutlinedTextField(
             value = state.password,
             onValueChange = onPasswordChanged,
+            modifier = Modifier.fillMaxWidth(),
             label = {
                 Text("Password")
             },
@@ -53,17 +56,19 @@ fun TherapistSignInScreen(
 
         OutlinedButton(
             onClick = onBack,
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Back")
         }
 
         Button(
             onClick = onSignIn,
-            enabled = !state.isSigningIn,
+            enabled = !state.isWorking,
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
-                if (state.isSigningIn) {
-                    "Signing in..."
+                if (state.isWorking) {
+                    "Please wait..."
                 } else {
                     "Sign in"
                 },

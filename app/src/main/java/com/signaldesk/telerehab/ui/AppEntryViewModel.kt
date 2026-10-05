@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 
 enum class AppDestination {
     ENTRY,
+    PATIENT_SIGN_IN,
     PATIENT,
     THERAPIST_SIGN_IN,
     THERAPIST,
@@ -77,7 +78,23 @@ class AppEntryViewModel @Inject constructor(
         }
     }
 
+    fun openEntry() {
+        _uiState.value =
+            _uiState.value.copy(
+                destination = AppDestination.ENTRY,
+                errorMessage = null,
+            )
+    }
+
     fun continueAsPatient() {
+        _uiState.value =
+            _uiState.value.copy(
+                destination = AppDestination.PATIENT_SIGN_IN,
+                errorMessage = null,
+            )
+    }
+
+    fun patientSignedIn() {
         _uiState.value =
             _uiState.value.copy(
                 destination = AppDestination.PATIENT,

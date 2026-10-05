@@ -43,6 +43,10 @@ fun TherapistHomeScreen(
         Double?,
     ) -> Unit,
     onDismissSaveMessage: () -> Unit,
+    onNewPatientEmailChanged: (String) -> Unit,
+    onNewPatientDisplayNameChanged: (String) -> Unit,
+    onAddPatient: () -> Unit,
+    onCreateKneeFlexionAssignment: () -> Unit,
     onSignOut: () -> Unit,
 ) {
     LaunchedEffect(state.saveMessage) {
@@ -89,6 +93,98 @@ fun TherapistHomeScreen(
                     .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement =
+                        Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(
+                        text = "Add patient",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+
+                    OutlinedTextField(
+                        value = state.newPatientEmail,
+                        onValueChange = onNewPatientEmailChanged,
+                        modifier = Modifier.fillMaxWidth(),
+                        label = {
+                            Text("Patient email")
+                        },
+                        singleLine = true,
+                    )
+
+                    OutlinedTextField(
+                        value = state.newPatientDisplayName,
+                        onValueChange =
+                            onNewPatientDisplayNameChanged,
+                        modifier = Modifier.fillMaxWidth(),
+                        label = {
+                            Text("Display name")
+                        },
+                        singleLine = true,
+                    )
+
+                    Button(
+                        onClick = onAddPatient,
+                        enabled =
+                            !state.isAddingPatient &&
+                                state.newPatientEmail.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            if (state.isAddingPatient) {
+                                "Adding..."
+                            } else {
+                                "Add patient"
+                            },
+                        )
+                    }
+
+                    state.addPatientMessage?.let { message ->
+                        Text(
+                            text = message,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+
+
+                    state.generatedPatientCredentials?.let { credentials ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement =
+                                    Arrangement.spacedBy(8.dp),
+                            ) {
+                                Text(
+                                    text = "Temporary patient credentials",
+                                    style =
+                                        MaterialTheme.typography.titleSmall,
+                                )
+
+                                Text(
+                                    text = "Email: ${credentials.email}",
+                                )
+
+                                Text(
+                                    text =
+                                        "Temporary password: ${credentials.temporaryPassword}",
+                                )
+
+                                Text(
+                                    text =
+                                        "Share these credentials with the patient. The password is not stored by TeleRehab.",
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             when {
                 state.isLoading ->
                     Text("Loading patients...")
@@ -138,7 +234,36 @@ fun TherapistHomeScreen(
                 }
 
                 if (state.assignments.isEmpty()) {
-                    Text("No assignments for this patient.")
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement =
+                                Arrangement.spacedBy(12.dp),
+                        ) {
+                            Text(
+                                text = "No assignments for this patient.",
+                            )
+
+                            Button(
+                                onClick =
+                                    onCreateKneeFlexionAssignment,
+                                enabled =
+                                    !state.isSavingAssignment,
+                                modifier =
+                                    Modifier.fillMaxWidth(),
+                            ) {
+                                Text(
+                                    if (state.isSavingAssignment) {
+                                        "Creating..."
+                                    } else {
+                                        "Create Knee Flexion assignment"
+                                    },
+                                )
+                            }
+                        }
+                    }
                 }
 
                 state.assignments.forEach { assignment ->

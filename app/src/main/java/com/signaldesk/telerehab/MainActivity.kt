@@ -13,6 +13,8 @@ import androidx.compose.runtime.getValue
 import com.signaldesk.telerehab.ui.AppDestination
 import com.signaldesk.telerehab.ui.AppEntryScreen
 import com.signaldesk.telerehab.ui.AppEntryViewModel
+import com.signaldesk.telerehab.ui.auth.PatientSignInScreen
+import com.signaldesk.telerehab.ui.auth.PatientSignInViewModel
 import com.signaldesk.telerehab.ui.auth.TherapistSignInScreen
 import com.signaldesk.telerehab.ui.auth.TherapistSignInViewModel
 import com.signaldesk.telerehab.ui.patient.PatientHomeScreen
@@ -31,6 +33,9 @@ class MainActivity : ComponentActivity() {
 
     private val patientHomeViewModel:
         PatientHomeViewModel by viewModels()
+
+    private val patientSignInViewModel:
+        PatientSignInViewModel by viewModels()
 
     private val therapistSignInViewModel:
         TherapistSignInViewModel by viewModels()
@@ -78,6 +83,32 @@ class MainActivity : ComponentActivity() {
                     }
 
                     appEntryState.destination ==
+                        AppDestination.PATIENT_SIGN_IN -> {
+                        val patientSignInState by
+                            patientSignInViewModel
+                                .uiState
+                                .collectAsState()
+
+                        PatientSignInScreen(
+                            state = patientSignInState,
+                            onEmailChanged =
+                                patientSignInViewModel::updateEmail,
+                            onPasswordChanged =
+                                patientSignInViewModel::updatePassword,
+                            onSignIn =
+                                patientSignInViewModel::signIn,
+                            onBack =
+                                appEntryViewModel::openEntry,
+                        )
+
+                        if (
+                            patientSignInState.signedInUserId != null
+                        ) {
+                            appEntryViewModel.patientSignedIn()
+                        }
+                    }
+
+                    appEntryState.destination ==
                         AppDestination.THERAPIST_SIGN_IN -> {
                         val signInState by
                             therapistSignInViewModel
@@ -93,6 +124,8 @@ class MainActivity : ComponentActivity() {
                             onSignIn = {
                                 therapistSignInViewModel.signIn()
                             },
+                            onBack =
+                                appEntryViewModel::openEntry,
                         )
 
                         if (
@@ -121,6 +154,14 @@ class MainActivity : ComponentActivity() {
                                 therapistHomeViewModel::saveAssignment,
                             onDismissSaveMessage =
                                 therapistHomeViewModel::clearSaveMessage,
+                            onNewPatientEmailChanged =
+                                therapistHomeViewModel::updateNewPatientEmail,
+                            onNewPatientDisplayNameChanged =
+                                therapistHomeViewModel::updateNewPatientDisplayName,
+                            onAddPatient =
+                                therapistHomeViewModel::addPatient,
+                            onCreateKneeFlexionAssignment =
+                                therapistHomeViewModel::createKneeFlexionAssignment,
                             onSignOut =
                                 appEntryViewModel::signOut,
                         )
@@ -158,6 +199,8 @@ class MainActivity : ComponentActivity() {
                                 guidedSessionViewModel::submitFrame,
                             onConfigureTracking =
                                 guidedSessionViewModel::configureTracking,
+                            onSignOut =
+                                appEntryViewModel::signOut,
                         )
                     }
                 }

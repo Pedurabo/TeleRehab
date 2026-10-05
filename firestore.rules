@@ -8,7 +8,17 @@ service cloud.firestore {
         if request.auth != null
         && request.auth.uid == userId;
 
-      allow write:
+      allow create:
+        if isTherapist()
+        && existsAfter(
+          /databases/$(database)/documents/therapists/$(request.auth.uid)/patients/$(userId)
+        )
+        && request.resource.data.keys().hasOnly([
+          'role'
+        ])
+        && request.resource.data.role == 'PATIENT';
+
+      allow update, delete:
         if false;
     }
 
@@ -17,7 +27,16 @@ service cloud.firestore {
         if request.auth != null
         && request.auth.uid == therapistId;
 
-      allow write:
+      allow create, update:
+        if isTherapist()
+        && request.auth.uid == therapistId
+        && request.resource.data.keys().hasOnly([
+          'active',
+          'displayName'
+        ])
+        && request.resource.data.active == true;
+
+      allow delete:
         if false;
     }
 

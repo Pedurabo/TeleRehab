@@ -10,4 +10,10 @@ interface TherapistPatientRepository {
         therapistId: String,
         patientId: String,
     ): Boolean
+
+    suspend fun addPatient(
+        therapistId: String,
+        email: String,
+        displayName: String?,
+    ): PatientCredentials
 }

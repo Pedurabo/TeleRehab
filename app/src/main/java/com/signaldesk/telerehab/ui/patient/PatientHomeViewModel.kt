@@ -1,5 +1,6 @@
 ﻿package com.signaldesk.telerehab.ui.patient
 
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
