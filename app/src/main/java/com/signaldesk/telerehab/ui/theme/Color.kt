@@ -1,11 +1,18 @@
-package com.signaldesk.telerehab.ui.theme
+﻿package com.signaldesk.telerehab.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val TeleRehabPrimary = Color(0xFF006A6A)
+val TeleRehabPrimaryDark = Color(0xFF4CDADA)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val TeleRehabSecondary = Color(0xFF4A6363)
+val TeleRehabSecondaryDark = Color(0xFFB1CCCC)
+
+val TeleRehabBackground = Color(0xFFF4F8F8)
+val TeleRehabBackgroundDark = Color(0xFF101414)
+
+val TeleRehabSurface = Color(0xFFFFFFFF)
+val TeleRehabSurfaceDark = Color(0xFF191C1C)
+
+val TeleRehabSurfaceVariant = Color(0xFFDCE5E4)
+val TeleRehabSurfaceVariantDark = Color(0xFF3F4948)
