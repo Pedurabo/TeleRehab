@@ -6,8 +6,10 @@ import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
 import com.signaldesk.telerehab.domain.auth.EnsureSignedIn
 import com.signaldesk.telerehab.domain.therapist.GetAssignedPatients
 import com.signaldesk.telerehab.domain.therapist.GetPatientAssignmentsForTherapist
+import com.signaldesk.telerehab.domain.therapist.GetPatientRecentSessionsForTherapist
 import com.signaldesk.telerehab.domain.therapist.SavePatientAssignmentForTherapist
 import com.signaldesk.telerehab.domain.therapist.TherapistPatient
+import com.signaldesk.telerehab.domain.session.ExerciseSession
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +21,7 @@ data class TherapistHomeUiState(
     val patients: List<TherapistPatient> = emptyList(),
     val selectedPatientId: String? = null,
     val assignments: List<ExerciseAssignment> = emptyList(),
+    val recentSessions: List<ExerciseSession> = emptyList(),
     val isLoading: Boolean = true,
     val isSavingAssignment: Boolean = false,
     val saveMessage: String? = null,
@@ -30,6 +33,7 @@ class TherapistHomeViewModel @Inject constructor(
     private val ensureSignedIn: EnsureSignedIn,
     private val getAssignedPatients: GetAssignedPatients,
     private val getPatientAssignments: GetPatientAssignmentsForTherapist,
+    private val getPatientRecentSessions: GetPatientRecentSessionsForTherapist,
     private val savePatientAssignment: SavePatientAssignmentForTherapist,
 ) : ViewModel() {
 
@@ -89,10 +93,17 @@ class TherapistHomeViewModel @Inject constructor(
                         patientId = patientId,
                     )
 
+                val recentSessions =
+                    getPatientRecentSessions(
+                        therapistId = therapistId,
+                        patientId = patientId,
+                    )
+
                 _uiState.value =
                     _uiState.value.copy(
                         selectedPatientId = patientId,
                         assignments = assignments,
+                        recentSessions = recentSessions,
                         errorMessage = null,
                     )
             } catch (error: Throwable) {

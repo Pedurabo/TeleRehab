@@ -118,6 +118,54 @@ fun TherapistHomeScreen(
                     onSave = onSaveAssignment,
                 )
             }
+
+            Text(
+                text = "Recent sessions",
+                style = MaterialTheme.typography.titleMedium,
+            )
+
+            if (state.recentSessions.isEmpty()) {
+                Text("No completed sessions yet.")
+            } else {
+                state.recentSessions.forEach { session ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement =
+                                Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                text = "Session ${session.id}",
+                                style = MaterialTheme.typography.titleSmall,
+                            )
+
+                            Text("Completed: ${session.completedAt}")
+
+                            session.metrics?.let { metrics ->
+                                Text(
+                                    "Repetitions: ${metrics.completedRepetitions}",
+                                )
+
+                                metrics.minimumKneeAngleDegrees?.let { angle ->
+                                    Text(
+                                        "Minimum knee angle: $angle degrees",
+                                    )
+                                }
+
+                                metrics.maximumKneeAngleDegrees?.let { angle ->
+                                    Text(
+                                        "Maximum knee angle: $angle degrees",
+                                    )
+                                }
+                            } ?: Text(
+                                "No derived metrics recorded.",
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
