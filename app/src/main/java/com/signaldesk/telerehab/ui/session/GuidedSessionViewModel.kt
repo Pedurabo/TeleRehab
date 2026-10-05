@@ -3,6 +3,8 @@ package com.signaldesk.telerehab.ui.session
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.signaldesk.telerehab.domain.analysis.CalculateKneeAngle
+import com.signaldesk.telerehab.domain.analysis.KneeRepetitionConfiguration
+import com.signaldesk.telerehab.domain.analysis.KneeRepetitionTracker
 import com.signaldesk.telerehab.domain.analysis.KneeSide
 import com.signaldesk.telerehab.domain.analysis.PoseAnalysisEngine
 import com.signaldesk.telerehab.domain.analysis.PoseFrame
@@ -18,6 +20,9 @@ data class GuidedSessionAnalysisState(
     val lastLandmarkCount: Int = 0,
     val leftKneeAngleDegrees: Double? = null,
     val rightKneeAngleDegrees: Double? = null,
+    val repetitions: Int = 0,
+    val targetRepetitions: Int = 0,
+    val trackingConfigured: Boolean = false,
     val isAnalyzing: Boolean = false,
 )
 
@@ -35,6 +40,57 @@ class GuidedSessionViewModel @Inject constructor(
     val analysisState:
         StateFlow<GuidedSessionAnalysisState> =
         _analysisState
+
+    private var repetitionTracker:
+        KneeRepetitionTracker? = null
+
+    private var trackedSide:
+        KneeSide = KneeSide.LEFT
+
+    fun configureTracking(
+        targetRepetitions: Int,
+        flexedAtOrBelowDegrees: Double?,
+        extendedAtOrAboveDegrees: Double?,
+    ) {
+        require(
+            targetRepetitions > 0,
+        )
+
+        val configured =
+            flexedAtOrBelowDegrees != null &&
+                extendedAtOrAboveDegrees != null
+
+        repetitionTracker =
+            if (configured) {
+                KneeRepetitionTracker(
+                    configuration =
+                        KneeRepetitionConfiguration(
+                            flexedAtOrBelowDegrees =
+                                requireNotNull(
+                                    flexedAtOrBelowDegrees,
+                                ),
+                            extendedAtOrAboveDegrees =
+                                requireNotNull(
+                                    extendedAtOrAboveDegrees,
+                                ),
+                        ),
+                )
+            } else {
+                null
+            }
+
+        trackedSide =
+            KneeSide.LEFT
+
+        _analysisState.value =
+            _analysisState.value.copy(
+                repetitions = 0,
+                targetRepetitions =
+                    targetRepetitions,
+                trackingConfigured =
+                    configured,
+            )
+    }
 
     fun submitFrame(
         frame: PoseFrame,
@@ -64,17 +120,30 @@ class GuidedSessionViewModel @Inject constructor(
                         frame = frame,
                     )
 
-                val leftKnee =
+                val left =
                     calculateKneeAngle.invoke(
                         observation = observation,
                         side = KneeSide.LEFT,
                     )
 
-                val rightKnee =
+                val right =
                     calculateKneeAngle.invoke(
                         observation = observation,
                         side = KneeSide.RIGHT,
                     )
+
+                val trackedMeasurement =
+                    when (trackedSide) {
+                        KneeSide.LEFT -> left
+                        KneeSide.RIGHT -> right
+                    }
+
+                val repetitionState =
+                    trackedMeasurement?.let {
+                        repetitionTracker?.accept(
+                            measurement = it,
+                        )
+                    }
 
                 _analysisState.value =
                     _analysisState.value.copy(
@@ -85,9 +154,15 @@ class GuidedSessionViewModel @Inject constructor(
                         lastLandmarkCount =
                             observation.landmarks.size,
                         leftKneeAngleDegrees =
-                            leftKnee?.angleDegrees,
+                            left?.angleDegrees,
                         rightKneeAngleDegrees =
-                            rightKnee?.angleDegrees,
+                            right?.angleDegrees,
+                        repetitions =
+                            repetitionState
+                                ?.repetitions
+                                ?: _analysisState
+                                    .value
+                                    .repetitions,
                         isAnalyzing = false,
                     )
             } catch (_: Throwable) {

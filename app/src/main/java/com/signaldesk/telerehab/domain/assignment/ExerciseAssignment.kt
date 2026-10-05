@@ -7,31 +7,41 @@ data class ExerciseAssignment(
     val title: String,
     val instructions: String,
     val targetRepetitions: Int,
+    val flexedAtOrBelowDegrees: Double? = null,
+    val extendedAtOrAboveDegrees: Double? = null,
     val status: ExerciseAssignmentStatus,
 ) {
     init {
-        require(id.isNotBlank()) {
-            "Assignment ID must not be blank."
+        require(id.isNotBlank())
+        require(patientId.isNotBlank())
+        require(exerciseId.isNotBlank())
+        require(title.isNotBlank())
+        require(instructions.isNotBlank())
+        require(targetRepetitions > 0)
+
+        require(
+            (flexedAtOrBelowDegrees == null) ==
+                (extendedAtOrAboveDegrees == null),
+        ) {
+            "Movement thresholds must both be present or both be absent."
         }
 
-        require(patientId.isNotBlank()) {
-            "Patient ID must not be blank."
-        }
+        if (
+            flexedAtOrBelowDegrees != null &&
+            extendedAtOrAboveDegrees != null
+        ) {
+            require(
+                flexedAtOrBelowDegrees in 0.0..180.0,
+            )
 
-        require(exerciseId.isNotBlank()) {
-            "Exercise ID must not be blank."
-        }
+            require(
+                extendedAtOrAboveDegrees in 0.0..180.0,
+            )
 
-        require(title.isNotBlank()) {
-            "Exercise title must not be blank."
-        }
-
-        require(instructions.isNotBlank()) {
-            "Exercise instructions must not be blank."
-        }
-
-        require(targetRepetitions > 0) {
-            "Target repetitions must be greater than zero."
+            require(
+                flexedAtOrBelowDegrees <
+                    extendedAtOrAboveDegrees,
+            )
         }
     }
 }

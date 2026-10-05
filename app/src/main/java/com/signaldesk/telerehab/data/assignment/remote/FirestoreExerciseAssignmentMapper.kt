@@ -11,55 +11,76 @@ class FirestoreExerciseAssignmentMapper @Inject constructor() {
         data: Map<String, Any?>,
     ): ExerciseAssignment {
         val id =
-            data.requiredString(
-                field = "id",
+            data.requireString(
+                key = "id",
             )
 
         require(id == documentId) {
-            "Assignment document ID must match its id field."
+            "Assignment document ID must match assignment ID."
         }
-
-        val targetRepetitions =
-            (data["targetRepetitions"] as? Number)
-                ?.toInt()
-                ?: error(
-                    "Assignment field targetRepetitions is required.",
-                )
 
         return ExerciseAssignment(
             id = id,
             patientId =
-                data.requiredString(
-                    field = "patientId",
+                data.requireString(
+                    key = "patientId",
                 ),
             exerciseId =
-                data.requiredString(
-                    field = "exerciseId",
+                data.requireString(
+                    key = "exerciseId",
                 ),
             title =
-                data.requiredString(
-                    field = "title",
+                data.requireString(
+                    key = "title",
                 ),
             instructions =
-                data.requiredString(
-                    field = "instructions",
+                data.requireString(
+                    key = "instructions",
                 ),
-            targetRepetitions = targetRepetitions,
+            targetRepetitions =
+                data.requireNumber(
+                    key = "targetRepetitions",
+                ).toInt(),
+            flexedAtOrBelowDegrees =
+                (
+                    data["flexedAtOrBelowDegrees"]
+                        as? Number
+                )?.toDouble(),
+            extendedAtOrAboveDegrees =
+                (
+                    data["extendedAtOrAboveDegrees"]
+                        as? Number
+                )?.toDouble(),
             status =
                 ExerciseAssignmentStatus.valueOf(
-                    data.requiredString(
-                        field = "status",
+                    data.requireString(
+                        key = "status",
                     ),
                 ),
         )
     }
 
-    private fun Map<String, Any?>.requiredString(
-        field: String,
-    ): String =
-        (this[field] as? String)
-            ?.takeIf(String::isNotBlank)
-            ?: error(
-                "Assignment field $field is required.",
-            )
+    private fun Map<String, Any?>.requireString(
+        key: String,
+    ): String {
+        val value =
+            this[key] as? String
+
+        require(
+            !value.isNullOrBlank(),
+        ) {
+            "Missing or invalid Firestore string field: $key"
+        }
+
+        return value
+    }
+
+    private fun Map<String, Any?>.requireNumber(
+        key: String,
+    ): Number =
+        requireNotNull(
+            this[key] as? Number,
+        ) {
+            "Missing or invalid Firestore numeric field: $key"
+        }
 }

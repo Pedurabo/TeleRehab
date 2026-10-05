@@ -21,6 +21,8 @@ class ExerciseAssignmentMapperTest {
                 title = "Knee Flexion and Extension",
                 instructions = "Bend and straighten the knee.",
                 targetRepetitions = 10,
+                flexedAtOrBelowDegrees = null,
+                extendedAtOrAboveDegrees = null,
                 status = "ACTIVE",
             )
 
@@ -35,6 +37,8 @@ class ExerciseAssignmentMapperTest {
                 title = "Knee Flexion and Extension",
                 instructions = "Bend and straighten the knee.",
                 targetRepetitions = 10,
+                flexedAtOrBelowDegrees = null,
+                extendedAtOrAboveDegrees = null,
                 status = ExerciseAssignmentStatus.ACTIVE,
             ),
             result,
@@ -51,6 +55,8 @@ class ExerciseAssignmentMapperTest {
                 title = "Knee Flexion and Extension",
                 instructions = "Bend and straighten the knee.",
                 targetRepetitions = 10,
+                flexedAtOrBelowDegrees = null,
+                extendedAtOrAboveDegrees = null,
                 status = ExerciseAssignmentStatus.ACTIVE,
             )
 

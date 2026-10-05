@@ -39,6 +39,7 @@ fun PatientHomeScreen(
     onStartSession: () -> Unit,
     guidedAnalysisState: GuidedSessionAnalysisState,
     onPoseFrame: (PoseFrame) -> Unit,
+    onConfigureTracking: (Int, Double?, Double?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -63,6 +64,15 @@ fun PatientHomeScreen(
 
                 state.startedSessionId != null &&
                     state.selectedAssignment != null -> {
+                    androidx.compose.runtime.LaunchedEffect(
+                        state.selectedAssignment.id,
+                    ) {
+                        onConfigureTracking(
+                            state.selectedAssignment.targetRepetitions,
+                            state.selectedAssignment.flexedAtOrBelowDegrees,
+                            state.selectedAssignment.extendedAtOrAboveDegrees,
+                        )
+                    }
                     GuidedExerciseSessionScreen(
                         exerciseTitle =
                             state.selectedAssignment.title,
@@ -121,7 +131,7 @@ private fun LoadingContent() {
 
         Text(
             text =
-                "Loading your rehabilitation plan…",
+                "Loading your rehabilitation planâ€¦",
             style =
                 MaterialTheme.typography.bodyLarge,
         )
@@ -192,7 +202,7 @@ private fun AssignmentListContent(
                 Text(
                     text =
                         if (state.isRefreshing) {
-                            "Refreshing…"
+                            "Refreshingâ€¦"
                         } else {
                             "Refresh"
                         },
@@ -420,7 +430,7 @@ private fun AssignmentDetailContent(
                             "Session started"
 
                         isStartingSession ->
-                            "Starting…"
+                            "Startingâ€¦"
 
                         else ->
                             "Start session"

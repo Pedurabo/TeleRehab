@@ -14,5 +14,7 @@ data class ExerciseAssignmentEntity(
     val title: String,
     val instructions: String,
     val targetRepetitions: Int,
+    val flexedAtOrBelowDegrees: Double?,
+    val extendedAtOrAboveDegrees: Double?,
     val status: String,
 )

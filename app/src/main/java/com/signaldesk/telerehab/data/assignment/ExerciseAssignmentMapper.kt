@@ -17,7 +17,14 @@ class ExerciseAssignmentMapper @Inject constructor() {
             title = entity.title,
             instructions = entity.instructions,
             targetRepetitions = entity.targetRepetitions,
-            status = ExerciseAssignmentStatus.valueOf(entity.status),
+            flexedAtOrBelowDegrees =
+                entity.flexedAtOrBelowDegrees,
+            extendedAtOrAboveDegrees =
+                entity.extendedAtOrAboveDegrees,
+            status =
+                ExerciseAssignmentStatus.valueOf(
+                    entity.status,
+                ),
         )
 
     fun toEntity(
@@ -29,7 +36,12 @@ class ExerciseAssignmentMapper @Inject constructor() {
             exerciseId = assignment.exerciseId,
             title = assignment.title,
             instructions = assignment.instructions,
-            targetRepetitions = assignment.targetRepetitions,
+            targetRepetitions =
+                assignment.targetRepetitions,
+            flexedAtOrBelowDegrees =
+                assignment.flexedAtOrBelowDegrees,
+            extendedAtOrAboveDegrees =
+                assignment.extendedAtOrAboveDegrees,
             status = assignment.status.name,
         )
 }

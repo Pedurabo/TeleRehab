@@ -54,6 +54,8 @@ class MainActivity : ComponentActivity() {
                         guidedAnalysisState,
                     onPoseFrame =
                         guidedSessionViewModel::submitFrame,
+                    onConfigureTracking =
+                        guidedSessionViewModel::configureTracking,
                 )
             }
         }
