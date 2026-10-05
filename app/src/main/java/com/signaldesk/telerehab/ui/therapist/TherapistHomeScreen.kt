@@ -1,6 +1,7 @@
 package com.signaldesk.telerehab.ui.therapist
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,6 +47,10 @@ fun TherapistHomeScreen(
             delay(2500)
             onDismissSaveMessage()
         }
+    }
+
+    var selectedSessionId by remember {
+        mutableStateOf<String?>(null)
     }
 
     Column(
@@ -135,8 +140,21 @@ fun TherapistHomeScreen(
                 Text("No completed sessions yet.")
             } else {
                 state.recentSessions.forEach { session ->
+                    val isSelected =
+                        selectedSessionId == session.id
+
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedSessionId =
+                                        if (isSelected) {
+                                            null
+                                        } else {
+                                            session.id
+                                        }
+                                },
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp),
@@ -148,23 +166,39 @@ fun TherapistHomeScreen(
                                 style = MaterialTheme.typography.titleSmall,
                             )
 
-                            Text("Completed: ${session.completedAt.toDisplayDateTime()}")
+                            Text(
+                                "Completed: ${session.completedAt.toDisplayDateTime()}",
+                            )
 
                             session.metrics?.let { metrics ->
                                 Text(
                                     "Repetitions: ${metrics.completedRepetitions}",
                                 )
 
-                                metrics.minimumKneeAngleDegrees?.let { angle ->
+                                if (isSelected) {
                                     Text(
-                                        "Minimum knee angle: $angle degrees",
+                                        "Assignment: ${session.assignmentId}",
                                     )
-                                }
 
-                                metrics.maximumKneeAngleDegrees?.let { angle ->
                                     Text(
-                                        "Maximum knee angle: $angle degrees",
+                                        "Started: ${session.startedAt.toDisplayDateTime()}",
                                     )
+
+                                    metrics.minimumKneeAngleDegrees?.let { angle ->
+                                        Text(
+                                            "Minimum knee angle: $angle degrees",
+                                        )
+                                    }
+
+                                    metrics.maximumKneeAngleDegrees?.let { angle ->
+                                        Text(
+                                            "Maximum knee angle: $angle degrees",
+                                        )
+                                    }
+
+                                    Text("Tap again to close")
+                                } else {
+                                    Text("Tap for session details")
                                 }
                             } ?: Text(
                                 "No derived metrics recorded.",
