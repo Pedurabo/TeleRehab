@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
 import com.signaldesk.telerehab.domain.auth.EnsureSignedIn
 import com.signaldesk.telerehab.domain.therapist.GetAssignedPatients
+import com.signaldesk.telerehab.domain.therapist.AssignmentWeeklyAdherence
 import com.signaldesk.telerehab.domain.therapist.CurrentWeekStartProvider
 import com.signaldesk.telerehab.domain.therapist.GetPatientAssignmentsForTherapist
 import com.signaldesk.telerehab.domain.therapist.GetPatientRecentSessionsForTherapist
@@ -27,10 +28,7 @@ data class TherapistHomeUiState(
     val assignments: List<ExerciseAssignment> = emptyList(),
     val recentSessions: List<ExerciseSession> = emptyList(),
     val completedSessionCount: Int = 0,
-    val weeklyCompletedSessionCount: Int = 0,
-    val weeklyTargetSessionCount: Int? = null,
-    val weeklyAdherencePercent: Int? = null,
-    val weeklyAdherenceStatus: WeeklyAdherenceStatus? = null,
+    val assignmentWeeklyAdherence: List<AssignmentWeeklyAdherence> = emptyList(),
     val latestCompletedRepetitions: Int? = null,
     val repetitionTrend: Int? = null,
     val isLoading: Boolean = true,
@@ -124,19 +122,32 @@ class TherapistHomeViewModel @Inject constructor(
                         sinceEpochMillis = weekStart,
                     )
 
-                val weeklyTarget =
-                    assignments
-                        .firstOrNull()
-                        ?.targetSessionsPerWeek
+                val weeklySessionsByAssignment =
+                    weeklySessions.groupBy { it.assignmentId }
 
-                val weeklyAdherence =
-                    if (weeklyTarget != null) {
-                        weeklyAdherenceCalculator.calculate(
-                            completedSessions = weeklySessions.size,
-                            targetSessions = weeklyTarget,
+                val assignmentWeeklyAdherence =
+                    assignments.map { assignment ->
+                        val completedSessions =
+                            weeklySessionsByAssignment[
+                                assignment.id
+                            ].orEmpty().size
+
+                        val result =
+                            weeklyAdherenceCalculator.calculate(
+                                completedSessions = completedSessions,
+                                targetSessions =
+                                    assignment.targetSessionsPerWeek,
+                            )
+
+                        AssignmentWeeklyAdherence(
+                            assignmentId = assignment.id,
+                            assignmentTitle = assignment.title,
+                            completedSessions = completedSessions,
+                            targetSessions =
+                                assignment.targetSessionsPerWeek,
+                            percent = result.percent,
+                            status = result.status,
                         )
-                    } else {
-                        null
                     }
 
                 val latestRepetitions =
@@ -157,10 +168,8 @@ class TherapistHomeViewModel @Inject constructor(
                         assignments = assignments,
                         recentSessions = recentSessions,
                         completedSessionCount = recentSessions.size,
-                        weeklyCompletedSessionCount = weeklySessions.size,
-                        weeklyTargetSessionCount = weeklyTarget,
-                        weeklyAdherencePercent = weeklyAdherence?.percent,
-                        weeklyAdherenceStatus = weeklyAdherence?.status,
+                        assignmentWeeklyAdherence =
+                            assignmentWeeklyAdherence,
                         latestCompletedRepetitions = latestRepetitions,
                         repetitionTrend =
                             if (
@@ -247,10 +256,7 @@ class TherapistHomeViewModel @Inject constructor(
                 assignments = emptyList(),
                 recentSessions = emptyList(),
                 completedSessionCount = 0,
-                weeklyCompletedSessionCount = 0,
-                weeklyTargetSessionCount = null,
-                weeklyAdherencePercent = null,
-                weeklyAdherenceStatus = null,
+                assignmentWeeklyAdherence = emptyList(),
                 latestCompletedRepetitions = null,
                 repetitionTrend = null,
                 saveMessage = null,

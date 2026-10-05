@@ -137,22 +137,147 @@ class TherapistHomeViewModelTest {
                 viewModel.uiState.value
 
             assertEquals(patientId, state.selectedPatientId)
-            assertEquals(2, state.weeklyCompletedSessionCount)
-            assertEquals(3, state.weeklyTargetSessionCount)
-            assertEquals(66, state.weeklyAdherencePercent)
+
+            val adherence =
+                state.assignmentWeeklyAdherence.single()
+
+            assertEquals("assignment-1", adherence.assignmentId)
+            assertEquals("Knee Flexion", adherence.assignmentTitle)
+            assertEquals(2, adherence.completedSessions)
+            assertEquals(3, adherence.targetSessions)
+            assertEquals(66, adherence.percent)
             assertEquals(
                 WeeklyAdherenceStatus.IN_PROGRESS,
-                state.weeklyAdherenceStatus,
+                adherence.status,
             )
         }
+
+    @Test
+    fun selectingPatientGroupsWeeklyAdherenceByAssignment() =
+        runTest {
+            val therapistId = "therapist-1"
+            val patientId = "patient-1"
+
+            val assignments =
+                listOf(
+                    ExerciseAssignment(
+                        id = "assignment-1",
+                        patientId = patientId,
+                        exerciseId = "knee-flexion",
+                        title = "Knee Flexion",
+                        instructions = "Perform slowly.",
+                        targetRepetitions = 5,
+                        targetSessionsPerWeek = 3,
+                        flexedAtOrBelowDegrees = 80.0,
+                        extendedAtOrAboveDegrees = 130.0,
+                        status = ExerciseAssignmentStatus.ACTIVE,
+                    ),
+                    ExerciseAssignment(
+                        id = "assignment-2",
+                        patientId = patientId,
+                        exerciseId = "knee-extension",
+                        title = "Knee Extension",
+                        instructions = "Extend under control.",
+                        targetRepetitions = 6,
+                        targetSessionsPerWeek = 2,
+                        flexedAtOrBelowDegrees = 85.0,
+                        extendedAtOrAboveDegrees = 135.0,
+                        status = ExerciseAssignmentStatus.ACTIVE,
+                    ),
+                )
+
+            val weeklySessions =
+                listOf(
+                    completedSession(
+                        id = "session-1",
+                        patientId = patientId,
+                        assignmentId = "assignment-1",
+                    ),
+                    completedSession(
+                        id = "session-2",
+                        patientId = patientId,
+                        assignmentId = "assignment-1",
+                    ),
+                    completedSession(
+                        id = "session-3",
+                        patientId = patientId,
+                        assignmentId = "assignment-2",
+                    ),
+                )
+
+            val assignmentSource =
+                FakeAssignmentSource(assignments)
+
+            val sessionSource =
+                FakeSessionSource(
+                    recentSessions = weeklySessions,
+                    weeklySessions = weeklySessions,
+                )
+
+            val viewModel =
+                TherapistHomeViewModel(
+                    ensureSignedIn =
+                        EnsureSignedIn(
+                            FakeAuthSession(therapistId),
+                        ),
+                    getAssignedPatients =
+                        GetAssignedPatients(
+                            FakePatientRepository(
+                                therapistId = therapistId,
+                                patientId = patientId,
+                            ),
+                        ),
+                    getPatientAssignments =
+                        GetPatientAssignmentsForTherapist(
+                            assignmentSource,
+                        ),
+                    getPatientRecentSessions =
+                        GetPatientRecentSessionsForTherapist(
+                            sessionSource,
+                        ),
+                    getPatientCompletedSessionsSince =
+                        GetPatientCompletedSessionsSinceForTherapist(
+                            sessionSource,
+                        ),
+                    savePatientAssignment =
+                        SavePatientAssignmentForTherapist(
+                            assignmentSource,
+                        ),
+                    weeklyAdherenceCalculator =
+                        WeeklyAdherenceCalculator(),
+                    currentWeekStartProvider =
+                        CurrentWeekStartProvider(),
+                )
+
+            advanceUntilIdle()
+            viewModel.selectPatient(patientId)
+            advanceUntilIdle()
+
+            val adherence =
+                viewModel.uiState.value.assignmentWeeklyAdherence
+
+            assertEquals(2, adherence.size)
+
+            assertEquals("assignment-1", adherence[0].assignmentId)
+            assertEquals(2, adherence[0].completedSessions)
+            assertEquals(3, adherence[0].targetSessions)
+            assertEquals(66, adherence[0].percent)
+
+            assertEquals("assignment-2", adherence[1].assignmentId)
+            assertEquals(1, adherence[1].completedSessions)
+            assertEquals(2, adherence[1].targetSessions)
+            assertEquals(50, adherence[1].percent)
+        }
+
 
     private fun completedSession(
         id: String,
         patientId: String,
+        assignmentId: String = "assignment-1",
     ): ExerciseSession =
         ExerciseSession(
             id = id,
-            assignmentId = "assignment-1",
+            assignmentId = assignmentId,
             patientId = patientId,
             startedAt = Instant.parse("2026-10-05T08:00:00Z"),
             completedAt = Instant.parse("2026-10-05T08:15:00Z"),

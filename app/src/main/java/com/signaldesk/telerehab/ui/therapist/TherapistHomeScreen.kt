@@ -155,41 +155,43 @@ fun TherapistHomeScreen(
                             style = MaterialTheme.typography.titleMedium,
                         )
 
-                        Text(
-                            "Completed this week: ${state.weeklyCompletedSessionCount}",
-                        )
+                        if (state.assignmentWeeklyAdherence.isEmpty()) {
+                            Text("No weekly adherence data.")
+                        } else {
+                            state.assignmentWeeklyAdherence.forEach { adherence ->
+                                Text(
+                                    text = adherence.assignmentTitle,
+                                    style = MaterialTheme.typography.titleSmall,
+                                )
 
-                        Text(
-                            "Weekly target: ${
-                                state.weeklyTargetSessionCount ?: "-"
-                            }",
-                        )
+                                Text(
+                                    "Completed this week: ${adherence.completedSessions}",
+                                )
 
-                        Text(
-                            "Weekly adherence: ${
-                                state.weeklyAdherencePercent
-                                    ?.let { "$it%" }
-                                    ?: "-"
-                            }",
-                        )
+                                Text(
+                                    "Weekly target: ${adherence.targetSessions}",
+                                )
 
-                        Text(
-                            "Status: ${
-                                when (state.weeklyAdherenceStatus) {
-                                    WeeklyAdherenceStatus.NOT_STARTED ->
-                                        "Not started"
+                                Text(
+                                    "Weekly adherence: ${adherence.percent}%",
+                                )
 
-                                    WeeklyAdherenceStatus.IN_PROGRESS ->
-                                        "In progress"
+                                Text(
+                                    "Status: ${
+                                        when (adherence.status) {
+                                            WeeklyAdherenceStatus.NOT_STARTED ->
+                                                "Not started"
 
-                                    WeeklyAdherenceStatus.COMPLETE ->
-                                        "Complete"
+                                            WeeklyAdherenceStatus.IN_PROGRESS ->
+                                                "In progress"
 
-                                    null ->
-                                        "-"
-                                }
-                            }",
-                        )
+                                            WeeklyAdherenceStatus.COMPLETE ->
+                                                "Complete"
+                                        }
+                                    }",
+                                )
+                            }
+                        }
 
                         state.latestCompletedRepetitions?.let {
                             Text("Latest repetitions: $it")
