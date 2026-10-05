@@ -19,6 +19,12 @@ data class PatientHomeUiState(
     val patientId: String? = null,
     val assignments: List<ExerciseAssignment> = emptyList(),
     val recentSessions: List<ExerciseSession> = emptyList(),
+    val recentCompletedSessionCount: Int = 0,
+    val recentTotalRepetitions: Int = 0,
+    val latestCompletedRepetitions: Int? = null,
+    val repetitionChangeFromPrevious: Int? = null,
+    val latestKneeRangeWidthDegrees: Double? = null,
+    val kneeRangeChangeFromPreviousDegrees: Double? = null,
     val selectedAssignment: ExerciseAssignment? = null,
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
@@ -68,11 +74,26 @@ class PatientHomeViewModel @Inject constructor(
                         limit = 10,
                     )
 
+                val progress =
+                    recentSessions.toProgressSummary()
+
                 _uiState.value =
                     _uiState.value.copy(
                         patientId = patientId,
                         assignments = cachedAssignments,
                         recentSessions = recentSessions,
+                        recentCompletedSessionCount =
+                            progress.completedSessionCount,
+                        recentTotalRepetitions =
+                            progress.totalRepetitions,
+                        latestCompletedRepetitions =
+                            progress.latestRepetitions,
+                        repetitionChangeFromPrevious =
+                            progress.repetitionChange,
+                        latestKneeRangeWidthDegrees =
+                            progress.latestRangeWidth,
+                        kneeRangeChangeFromPreviousDegrees =
+                            progress.rangeWidthChange,
                         isLoading = false,
                         isRefreshing = true,
                         errorMessage = null,
@@ -206,11 +227,26 @@ class PatientHomeViewModel @Inject constructor(
                         )
                     } ?: emptyList()
 
+                val progress =
+                    recentSessions.toProgressSummary()
+
                 _uiState.value =
                     _uiState.value.copy(
                         selectedAssignment = null,
                         startedSessionId = null,
                         recentSessions = recentSessions,
+                        recentCompletedSessionCount =
+                            progress.completedSessionCount,
+                        recentTotalRepetitions =
+                            progress.totalRepetitions,
+                        latestCompletedRepetitions =
+                            progress.latestRepetitions,
+                        repetitionChangeFromPrevious =
+                            progress.repetitionChange,
+                        latestKneeRangeWidthDegrees =
+                            progress.latestRangeWidth,
+                        kneeRangeChangeFromPreviousDegrees =
+                            progress.rangeWidthChange,
                         errorMessage = null,
                     )
             } catch (error: Throwable) {
@@ -224,6 +260,88 @@ class PatientHomeViewModel @Inject constructor(
         }
     }
 
+
+
+    private data class ProgressSummary(
+        val completedSessionCount: Int,
+        val totalRepetitions: Int,
+        val latestRepetitions: Int?,
+        val repetitionChange: Int?,
+        val latestRangeWidth: Double?,
+        val rangeWidthChange: Double?,
+    )
+
+    private fun List<ExerciseSession>.toProgressSummary(): ProgressSummary {
+        val latestMetrics =
+            firstOrNull()?.metrics
+
+        val previousMetrics =
+            getOrNull(1)?.metrics
+
+        val latestRepetitions =
+            latestMetrics?.completedRepetitions
+
+        val previousRepetitions =
+            previousMetrics?.completedRepetitions
+
+        val latestRangeWidth =
+            latestMetrics?.let { metrics ->
+                val minimum =
+                    metrics.minimumKneeAngleDegrees
+
+                val maximum =
+                    metrics.maximumKneeAngleDegrees
+
+                if (minimum != null && maximum != null) {
+                    maximum - minimum
+                } else {
+                    null
+                }
+            }
+
+        val previousRangeWidth =
+            previousMetrics?.let { metrics ->
+                val minimum =
+                    metrics.minimumKneeAngleDegrees
+
+                val maximum =
+                    metrics.maximumKneeAngleDegrees
+
+                if (minimum != null && maximum != null) {
+                    maximum - minimum
+                } else {
+                    null
+                }
+            }
+
+        return ProgressSummary(
+            completedSessionCount = size,
+            totalRepetitions =
+                sumOf {
+                    it.metrics?.completedRepetitions ?: 0
+                },
+            latestRepetitions = latestRepetitions,
+            repetitionChange =
+                if (
+                    latestRepetitions != null &&
+                    previousRepetitions != null
+                ) {
+                    latestRepetitions - previousRepetitions
+                } else {
+                    null
+                },
+            latestRangeWidth = latestRangeWidth,
+            rangeWidthChange =
+                if (
+                    latestRangeWidth != null &&
+                    previousRangeWidth != null
+                ) {
+                    latestRangeWidth - previousRangeWidth
+                } else {
+                    null
+                },
+        )
+    }
 
     private suspend fun refreshFromCloud(
         patientId: String,
