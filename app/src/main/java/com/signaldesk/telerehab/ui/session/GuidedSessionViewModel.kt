@@ -8,6 +8,7 @@ import com.signaldesk.telerehab.domain.analysis.KneeRepetitionTracker
 import com.signaldesk.telerehab.domain.analysis.KneeSide
 import com.signaldesk.telerehab.domain.analysis.PoseAnalysisEngine
 import com.signaldesk.telerehab.domain.analysis.PoseFrame
+import com.signaldesk.telerehab.domain.session.ExerciseSessionMetrics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,8 @@ data class GuidedSessionAnalysisState(
     val leftKneeAngleDegrees: Double? = null,
     val rightKneeAngleDegrees: Double? = null,
     val repetitions: Int = 0,
+    val minimumTrackedKneeAngleDegrees: Double? = null,
+    val maximumTrackedKneeAngleDegrees: Double? = null,
     val targetRepetitions: Int = 0,
     val trackingConfigured: Boolean = false,
     val isAnalyzing: Boolean = false,
@@ -85,6 +88,8 @@ class GuidedSessionViewModel @Inject constructor(
         _analysisState.value =
             _analysisState.value.copy(
                 repetitions = 0,
+                minimumTrackedKneeAngleDegrees = null,
+                maximumTrackedKneeAngleDegrees = null,
                 targetRepetitions =
                     targetRepetitions,
                 trackingConfigured =
@@ -145,12 +150,44 @@ class GuidedSessionViewModel @Inject constructor(
                         )
                     }
 
+                val currentState =
+                    _analysisState.value
+
+                val trackedAngleDegrees =
+                    trackedMeasurement?.angleDegrees
+
+                val updatedMinimumTrackedAngle =
+                    trackedAngleDegrees?.let { angle ->
+                        currentState
+                            .minimumTrackedKneeAngleDegrees
+                            ?.let { currentMinimum ->
+                                minOf(
+                                    currentMinimum,
+                                    angle,
+                                )
+                            }
+                            ?: angle
+                    } ?: currentState
+                        .minimumTrackedKneeAngleDegrees
+
+                val updatedMaximumTrackedAngle =
+                    trackedAngleDegrees?.let { angle ->
+                        currentState
+                            .maximumTrackedKneeAngleDegrees
+                            ?.let { currentMaximum ->
+                                maxOf(
+                                    currentMaximum,
+                                    angle,
+                                )
+                            }
+                            ?: angle
+                    } ?: currentState
+                        .maximumTrackedKneeAngleDegrees
+
                 _analysisState.value =
-                    _analysisState.value.copy(
+                    currentState.copy(
                         framesAnalyzed =
-                            _analysisState
-                                .value
-                                .framesAnalyzed + 1,
+                            currentState.framesAnalyzed + 1,
                         lastLandmarkCount =
                             observation.landmarks.size,
                         leftKneeAngleDegrees =
@@ -160,9 +197,11 @@ class GuidedSessionViewModel @Inject constructor(
                         repetitions =
                             repetitionState
                                 ?.repetitions
-                                ?: _analysisState
-                                    .value
-                                    .repetitions,
+                                ?: currentState.repetitions,
+                        minimumTrackedKneeAngleDegrees =
+                            updatedMinimumTrackedAngle,
+                        maximumTrackedKneeAngleDegrees =
+                            updatedMaximumTrackedAngle,
                         isAnalyzing = false,
                     )
             } catch (_: Throwable) {
@@ -172,5 +211,19 @@ class GuidedSessionViewModel @Inject constructor(
                     )
             }
         }
+    }
+
+    fun snapshotMetrics(): ExerciseSessionMetrics {
+        val state =
+            analysisState.value
+
+        return ExerciseSessionMetrics(
+            completedRepetitions =
+                state.repetitions,
+            minimumKneeAngleDegrees =
+                state.minimumTrackedKneeAngleDegrees,
+            maximumKneeAngleDegrees =
+                state.maximumTrackedKneeAngleDegrees,
+        )
     }
 }
