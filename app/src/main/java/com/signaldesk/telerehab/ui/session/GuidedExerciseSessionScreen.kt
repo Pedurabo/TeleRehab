@@ -47,6 +47,7 @@ fun GuidedExerciseSessionScreen(
     sessionId: String,
     analysisState: GuidedSessionAnalysisState,
     onPoseFrame: (PoseFrame) -> Unit,
+    onFinishSession: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val context =
@@ -98,6 +99,7 @@ fun GuidedExerciseSessionScreen(
                 lifecycleOwner = lifecycleOwner,
                 analysisState = analysisState,
                 onPoseFrame = onPoseFrame,
+                onFinishSession = onFinishSession,
             )
         } else {
             CameraPermissionContent(
@@ -119,6 +121,7 @@ private fun CameraSessionContent(
     lifecycleOwner: androidx.lifecycle.LifecycleOwner,
     analysisState: GuidedSessionAnalysisState,
     onPoseFrame: (PoseFrame) -> Unit,
+    onFinishSession: () -> Unit,
 ) {
     val context =
         LocalContext.current
@@ -249,6 +252,12 @@ private fun CameraSessionContent(
                     6.dp,
                 ),
         ) {
+            Button(
+                onClick = onFinishSession,
+            ) {
+                Text("Finish session")
+            }
+
             Text(
                 text = "Position yourself so your hip, knee, and ankle are visible.",
                 color = Color.White,
@@ -276,7 +285,7 @@ private fun CameraSessionContent(
                 text =
                     analysisState.leftKneeAngleDegrees
                         ?.let {
-                            "Left knee angle: ${it.toInt()}°"
+                            "Left knee angle: ${it.toInt()}Â°"
                         }
                         ?: "Left knee angle: waiting for landmarks",
                 color = Color.White,
@@ -288,7 +297,7 @@ private fun CameraSessionContent(
                 text =
                     analysisState.rightKneeAngleDegrees
                         ?.let {
-                            "Right knee angle: ${it.toInt()}°"
+                            "Right knee angle: ${it.toInt()}Â°"
                         }
                         ?: "Right knee angle: waiting for landmarks",
                 color = Color.White,

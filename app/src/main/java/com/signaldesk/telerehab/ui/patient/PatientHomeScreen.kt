@@ -37,6 +37,7 @@ fun PatientHomeScreen(
     onAssignmentSelected: (ExerciseAssignment) -> Unit,
     onCloseAssignment: () -> Unit,
     onStartSession: () -> Unit,
+    onFinishSession: () -> Unit = {},
     guidedAnalysisState: GuidedSessionAnalysisState,
     onPoseFrame: (PoseFrame) -> Unit,
     onConfigureTracking: (Int, Double?, Double?) -> Unit,
@@ -84,6 +85,7 @@ fun PatientHomeScreen(
                             guidedAnalysisState,
                         onPoseFrame =
                             onPoseFrame,
+                        onFinishSession = onFinishSession,
                     )
                 }
 
@@ -131,7 +133,7 @@ private fun LoadingContent() {
 
         Text(
             text =
-                "Loading your rehabilitation planâ€¦",
+                "Loading your rehabilitation planÃ¢â‚¬Â¦",
             style =
                 MaterialTheme.typography.bodyLarge,
         )
@@ -202,7 +204,7 @@ private fun AssignmentListContent(
                 Text(
                     text =
                         if (state.isRefreshing) {
-                            "Refreshingâ€¦"
+                            "RefreshingÃ¢â‚¬Â¦"
                         } else {
                             "Refresh"
                         },
@@ -345,6 +347,7 @@ private fun AssignmentDetailContent(
     errorMessage: String?,
     onBack: () -> Unit,
     onStartSession: () -> Unit,
+    onFinishSession: () -> Unit = {},
 ) {
     Column(
         modifier =
@@ -430,7 +433,7 @@ private fun AssignmentDetailContent(
                             "Session started"
 
                         isStartingSession ->
-                            "Startingâ€¦"
+                            "StartingÃ¢â‚¬Â¦"
 
                         else ->
                             "Start session"

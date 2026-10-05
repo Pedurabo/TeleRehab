@@ -6,6 +6,8 @@ import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
 import com.signaldesk.telerehab.domain.assignment.usecase.GetActiveExerciseAssignments
 import com.signaldesk.telerehab.domain.assignment.usecase.RefreshExerciseAssignments
 import com.signaldesk.telerehab.domain.auth.EnsureSignedIn
+import com.signaldesk.telerehab.domain.session.ExerciseSessionMetrics
+import com.signaldesk.telerehab.domain.session.usecase.CompleteExerciseSession
 import com.signaldesk.telerehab.domain.session.usecase.StartExerciseSession
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -29,6 +31,7 @@ class PatientHomeViewModel @Inject constructor(
     private val getActiveExerciseAssignments: GetActiveExerciseAssignments,
     private val refreshExerciseAssignments: RefreshExerciseAssignments,
     private val startExerciseSession: StartExerciseSession,
+    private val completeExerciseSession: CompleteExerciseSession,
 ) : ViewModel() {
 
     private val _uiState =
@@ -167,6 +170,37 @@ class PatientHomeViewModel @Inject constructor(
             }
         }
     }
+    fun finishActiveSession(
+        metrics: ExerciseSessionMetrics,
+    ) {
+        val sessionId =
+            _uiState.value.startedSessionId
+                ?: return
+
+        viewModelScope.launch {
+            try {
+                completeExerciseSession(
+                    sessionId = sessionId,
+                    metrics = metrics,
+                )
+
+                _uiState.value =
+                    _uiState.value.copy(
+                        selectedAssignment = null,
+                        startedSessionId = null,
+                        errorMessage = null,
+                    )
+            } catch (error: Throwable) {
+                _uiState.value =
+                    _uiState.value.copy(
+                        errorMessage =
+                            error.message
+                                ?: "Unable to finish the exercise session.",
+                    )
+            }
+        }
+    }
+
 
     private suspend fun refreshFromCloud(
         patientId: String,

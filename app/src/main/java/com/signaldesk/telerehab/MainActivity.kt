@@ -50,6 +50,11 @@ class MainActivity : ComponentActivity() {
                         viewModel::closeAssignment,
                     onStartSession =
                         viewModel::startSelectedAssignment,
+                    onFinishSession = {
+                        viewModel.finishActiveSession(
+                            guidedSessionViewModel.snapshotMetrics(),
+                        )
+                    },
                     guidedAnalysisState =
                         guidedAnalysisState,
                     onPoseFrame =

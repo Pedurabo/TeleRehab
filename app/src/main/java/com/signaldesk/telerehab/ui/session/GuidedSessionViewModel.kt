@@ -138,10 +138,10 @@ class GuidedSessionViewModel @Inject constructor(
                     )
 
                 val trackedMeasurement =
-                    when (trackedSide) {
-                        KneeSide.LEFT -> left
-                        KneeSide.RIGHT -> right
-                    }
+                    calculateKneeAngle.invoke(
+                        observation = observation,
+                        side = trackedSide,
+                    )
 
                 val repetitionState =
                     trackedMeasurement?.let {
