@@ -134,7 +134,7 @@ private fun LoadingContent() {
 
         Text(
             text =
-                "Loading your rehabilitation planÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦",
+                "Loading your rehabilitation planÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦",
             style =
                 MaterialTheme.typography.bodyLarge,
         )
@@ -205,7 +205,7 @@ private fun AssignmentListContent(
                 Text(
                     text =
                         if (state.isRefreshing) {
-                            "RefreshingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦"
+                            "RefreshingÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦"
                         } else {
                             "Refresh"
                         },
@@ -242,6 +242,42 @@ private fun AssignmentListContent(
         Spacer(
             modifier = Modifier.height(12.dp),
         )
+
+        if (state.recentSessions.isNotEmpty()) {
+            val totalRepetitions =
+                state.recentSessions.sumOf {
+                    it.metrics?.completedRepetitions ?: 0
+                }
+
+            val latestMetrics =
+                state.recentSessions.first().metrics
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Progress",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+
+                    Text("Completed sessions: ${state.recentSessions.size}")
+                    Text("Recent repetitions: $totalRepetitions")
+
+                    if (
+                        latestMetrics?.minimumKneeAngleDegrees != null &&
+                        latestMetrics.maximumKneeAngleDegrees != null
+                    ) {
+                        Text(
+                            "Latest knee range: %.1f - %.1f degrees".format(
+                                latestMetrics.minimumKneeAngleDegrees,
+                                latestMetrics.maximumKneeAngleDegrees,
+                            )
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         if (state.recentSessions.isNotEmpty()) {
             Text(text = "Recent sessions", style = MaterialTheme.typography.titleMedium)
@@ -458,7 +494,7 @@ private fun AssignmentDetailContent(
                             "Session started"
 
                         isStartingSession ->
-                            "StartingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦"
+                            "StartingÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦"
 
                         else ->
                             "Start session"
