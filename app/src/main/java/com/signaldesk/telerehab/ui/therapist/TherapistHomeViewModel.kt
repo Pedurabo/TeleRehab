@@ -7,10 +7,14 @@ import com.signaldesk.telerehab.domain.auth.EnsureSignedIn
 import com.signaldesk.telerehab.domain.therapist.GetAssignedPatients
 import com.signaldesk.telerehab.domain.therapist.GetPatientAssignmentsForTherapist
 import com.signaldesk.telerehab.domain.therapist.GetPatientRecentSessionsForTherapist
+import com.signaldesk.telerehab.domain.therapist.GetPatientCompletedSessionsSinceForTherapist
 import com.signaldesk.telerehab.domain.therapist.SavePatientAssignmentForTherapist
 import com.signaldesk.telerehab.domain.therapist.TherapistPatient
 import com.signaldesk.telerehab.domain.session.ExerciseSession
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.DayOfWeek
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +27,9 @@ data class TherapistHomeUiState(
     val assignments: List<ExerciseAssignment> = emptyList(),
     val recentSessions: List<ExerciseSession> = emptyList(),
     val completedSessionCount: Int = 0,
+    val weeklyCompletedSessionCount: Int = 0,
+    val weeklyTargetSessionCount: Int? = null,
+    val weeklyAdherencePercent: Int? = null,
     val latestCompletedRepetitions: Int? = null,
     val repetitionTrend: Int? = null,
     val isLoading: Boolean = true,
@@ -37,6 +44,8 @@ class TherapistHomeViewModel @Inject constructor(
     private val getAssignedPatients: GetAssignedPatients,
     private val getPatientAssignments: GetPatientAssignmentsForTherapist,
     private val getPatientRecentSessions: GetPatientRecentSessionsForTherapist,
+    private val getPatientCompletedSessionsSince:
+        GetPatientCompletedSessionsSinceForTherapist,
     private val savePatientAssignment: SavePatientAssignmentForTherapist,
 ) : ViewModel() {
 
@@ -102,6 +111,35 @@ class TherapistHomeViewModel @Inject constructor(
                         patientId = patientId,
                     )
 
+                val weekStart =
+                    ZonedDateTime
+                        .now(ZoneId.systemDefault())
+                        .with(DayOfWeek.MONDAY)
+                        .toLocalDate()
+                        .atStartOfDay(ZoneId.systemDefault())
+                        .toInstant()
+                        .toEpochMilli()
+
+                val weeklySessions =
+                    getPatientCompletedSessionsSince(
+                        therapistId = therapistId,
+                        patientId = patientId,
+                        sinceEpochMillis = weekStart,
+                    )
+
+                val weeklyTarget =
+                    assignments
+                        .firstOrNull()
+                        ?.targetSessionsPerWeek
+
+                val weeklyAdherence =
+                    if (weeklyTarget != null && weeklyTarget > 0) {
+                        ((weeklySessions.size * 100) / weeklyTarget)
+                            .coerceAtMost(100)
+                    } else {
+                        null
+                    }
+
                 val latestRepetitions =
                     recentSessions
                         .firstOrNull()
@@ -120,6 +158,9 @@ class TherapistHomeViewModel @Inject constructor(
                         assignments = assignments,
                         recentSessions = recentSessions,
                         completedSessionCount = recentSessions.size,
+                        weeklyCompletedSessionCount = weeklySessions.size,
+                        weeklyTargetSessionCount = weeklyTarget,
+                        weeklyAdherencePercent = weeklyAdherence,
                         latestCompletedRepetitions = latestRepetitions,
                         repetitionTrend =
                             if (
@@ -199,6 +240,23 @@ class TherapistHomeViewModel @Inject constructor(
             }
         }
     }
+    fun clearSelectedPatient() {
+        _uiState.value =
+            _uiState.value.copy(
+                selectedPatientId = null,
+                assignments = emptyList(),
+                recentSessions = emptyList(),
+                completedSessionCount = 0,
+                weeklyCompletedSessionCount = 0,
+                weeklyTargetSessionCount = null,
+                weeklyAdherencePercent = null,
+                latestCompletedRepetitions = null,
+                repetitionTrend = null,
+                saveMessage = null,
+                errorMessage = null,
+            )
+    }
+
     fun clearSaveMessage() {
         _uiState.value =
             _uiState.value.copy(

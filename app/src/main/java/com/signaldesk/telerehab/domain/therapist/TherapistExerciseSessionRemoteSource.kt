@@ -8,4 +8,10 @@ interface TherapistExerciseSessionRemoteSource {
         patientId: String,
         limit: Int,
     ): List<ExerciseSession>
+
+    suspend fun fetchCompletedForPatientSince(
+        therapistId: String,
+        patientId: String,
+        sinceEpochMillis: Long,
+    ): List<ExerciseSession>
 }

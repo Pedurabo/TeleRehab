@@ -59,7 +59,6 @@ fun TherapistHomeScreen(
             Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .verticalScroll(rememberScrollState())
                 .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -75,135 +74,194 @@ fun TherapistHomeScreen(
             )
         }
 
-        when {
-            state.isLoading ->
-                Text("Loading patients...")
+        Column(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            when {
+                state.isLoading ->
+                    Text("Loading patients...")
 
-            state.patients.isEmpty() ->
-                Text("No assigned patients.")
+                state.patients.isEmpty() ->
+                    Text("No assigned patients.")
 
-            else ->
-                state.patients.forEach { patient ->
-                    Button(
-                        onClick = {
-                            onPatientSelected(patient.patientId)
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(patient.displayName ?: patient.patientId.toPatientLabel())
-                    }
-                }
-        }
-
-        state.selectedPatientId?.let { patientId ->
-            Text(
-                text = "Selected patient",
-                style = MaterialTheme.typography.titleLarge,
-            )
-
-            Text(
-                state.patients
-                    .firstOrNull { it.patientId == patientId }
-                    ?.displayName
-                    ?: patientId.toPatientLabel(),
-            )
-
-            Text(
-                text = "Assignments",
-                style = MaterialTheme.typography.titleMedium,
-            )
-
-            state.saveMessage?.let {
-                Text(
-                    text = it,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-
-            if (state.assignments.isEmpty()) {
-                Text("No assignments for this patient.")
-            }
-
-            state.assignments.forEach { assignment ->
-                AssignmentEditor(
-                    assignment = assignment,
-                    isSaving = state.isSavingAssignment,
-                    onSave = onSaveAssignment,
-                )
-            }
-
-            Text(
-                text = "Recent sessions",
-                style = MaterialTheme.typography.titleMedium,
-            )
-
-            if (state.recentSessions.isEmpty()) {
-                Text("No completed sessions yet.")
-            } else {
-                state.recentSessions.forEach { session ->
-                    val isSelected =
-                        selectedSessionId == session.id
-
-                    Card(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    selectedSessionId =
-                                        if (isSelected) {
-                                            null
-                                        } else {
-                                            session.id
-                                        }
-                                },
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement =
-                                Arrangement.spacedBy(8.dp),
+                else ->
+                    state.patients.forEach { patient ->
+                        Button(
+                            onClick = {
+                                onPatientSelected(patient.patientId)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             Text(
-                                text = "Session ${session.id}",
-                                style = MaterialTheme.typography.titleSmall,
+                                patient.displayName
+                                    ?: patient.patientId.toPatientLabel(),
                             )
+                        }
+                    }
+            }
 
+            state.selectedPatientId?.let { patientId ->
+                Text(
+                    text = "Selected patient",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+
+                Text(
+                    state.patients
+                        .firstOrNull { it.patientId == patientId }
+                        ?.displayName
+                        ?: patientId.toPatientLabel(),
+                )
+
+                Text(
+                    text = "Assignments",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+
+                state.saveMessage?.let {
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+
+                if (state.assignments.isEmpty()) {
+                    Text("No assignments for this patient.")
+                }
+
+                state.assignments.forEach { assignment ->
+                    AssignmentEditor(
+                        assignment = assignment,
+                        isSaving = state.isSavingAssignment,
+                        onSave = onSaveAssignment,
+                    )
+                }
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement =
+                            Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = "Progress summary",
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+
+                        Text(
+                            "Completed this week: ${state.weeklyCompletedSessionCount}",
+                        )
+
+                        Text(
+                            "Weekly target: ${
+                                state.weeklyTargetSessionCount ?: "-"
+                            }",
+                        )
+
+                        Text(
+                            "Weekly adherence: ${
+                                state.weeklyAdherencePercent
+                                    ?.let { "$it%" }
+                                    ?: "-"
+                            }",
+                        )
+
+                        state.latestCompletedRepetitions?.let {
+                            Text("Latest repetitions: $it")
+                        }
+
+                        state.repetitionTrend?.let { trend ->
                             Text(
-                                "Completed: ${session.completedAt.toDisplayDateTime()}",
+                                "Repetition trend: ${
+                                    if (trend > 0) "+$trend" else trend
+                                }",
                             )
+                        }
+                    }
+                }
 
-                            session.metrics?.let { metrics ->
+                Text(
+                    text = "Recent sessions",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+
+                if (state.recentSessions.isEmpty()) {
+                    Text("No completed sessions yet.")
+                } else {
+                    state.recentSessions.forEach { session ->
+                        val isSelected =
+                            selectedSessionId == session.id
+
+                        Card(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        selectedSessionId =
+                                            if (isSelected) {
+                                                null
+                                            } else {
+                                                session.id
+                                            }
+                                    },
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement =
+                                    Arrangement.spacedBy(8.dp),
+                            ) {
                                 Text(
-                                    "Repetitions: ${metrics.completedRepetitions}",
+                                    text = "Session ${session.id}",
+                                    style =
+                                        MaterialTheme.typography.titleSmall,
                                 )
 
-                                if (isSelected) {
+                                Text(
+                                    "Completed: ${session.completedAt.toDisplayDateTime()}",
+                                )
+
+                                session.metrics?.let { metrics ->
                                     Text(
-                                        "Assignment: ${session.assignmentId}",
+                                        "Repetitions: ${metrics.completedRepetitions}",
                                     )
 
-                                    Text(
-                                        "Started: ${session.startedAt.toDisplayDateTime()}",
-                                    )
-
-                                    metrics.minimumKneeAngleDegrees?.let { angle ->
+                                    if (isSelected) {
                                         Text(
-                                            "Minimum knee angle: $angle degrees",
+                                            "Assignment: ${session.assignmentId}",
                                         )
-                                    }
 
-                                    metrics.maximumKneeAngleDegrees?.let { angle ->
                                         Text(
-                                            "Maximum knee angle: $angle degrees",
+                                            "Started: ${session.startedAt.toDisplayDateTime()}",
                                         )
-                                    }
 
-                                    Text("Tap again to close")
-                                } else {
-                                    Text("Tap for session details")
-                                }
-                            } ?: Text(
-                                "No derived metrics recorded.",
-                            )
+                                        metrics.minimumKneeAngleDegrees
+                                            ?.let { angle ->
+                                                Text(
+                                                    "Minimum knee angle: $angle degrees",
+                                                )
+                                            }
+
+                                        metrics.maximumKneeAngleDegrees
+                                            ?.let { angle ->
+                                                Text(
+                                                    "Maximum knee angle: $angle degrees",
+                                                )
+                                            }
+
+                                        Text("Tap again to close")
+                                    } else {
+                                        Text("Tap for session details")
+                                    }
+                                } ?: Text(
+                                    "No derived metrics recorded.",
+                                )
+                            }
                         }
                     }
                 }
@@ -296,11 +354,11 @@ private fun AssignmentEditor(
                 )
 
                 assignment.flexedAtOrBelowDegrees?.let {
-                    Text("Flexed at or below: $it°")
+                    Text("Flexed at or below: $it degrees")
                 }
 
                 assignment.extendedAtOrAboveDegrees?.let {
-                    Text("Extended at or above: $it°")
+                    Text("Extended at or above: $it degrees")
                 }
 
                 Button(
