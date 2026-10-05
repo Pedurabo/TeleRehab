@@ -21,7 +21,7 @@ import com.signaldesk.telerehab.core.database.entity.ExerciseSessionEntity
         ExerciseAssignmentEntity::class,
 ExerciseSessionEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class TeleRehabDatabase : RoomDatabase() {
@@ -71,6 +71,34 @@ abstract class TeleRehabDatabase : RoomDatabase() {
                         """
                         ALTER TABLE exercise_assignments
                         ADD COLUMN extendedAtOrAboveDegrees REAL
+                        """.trimIndent(),
+                    )
+                }
+            }
+
+        val MIGRATION_3_4 =
+            object : Migration(3, 4) {
+                override suspend fun migrate(
+                    connection: SQLiteConnection,
+                ) {
+                    connection.execSQL(
+                        """
+                        ALTER TABLE exercise_sessions
+                        ADD COLUMN completedRepetitions INTEGER
+                        """.trimIndent(),
+                    )
+
+                    connection.execSQL(
+                        """
+                        ALTER TABLE exercise_sessions
+                        ADD COLUMN minimumKneeAngleDegrees REAL
+                        """.trimIndent(),
+                    )
+
+                    connection.execSQL(
+                        """
+                        ALTER TABLE exercise_sessions
+                        ADD COLUMN maximumKneeAngleDegrees REAL
                         """.trimIndent(),
                     )
                 }

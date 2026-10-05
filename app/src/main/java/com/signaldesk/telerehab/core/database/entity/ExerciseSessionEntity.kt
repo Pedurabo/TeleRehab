@@ -13,4 +13,7 @@ data class ExerciseSessionEntity(
     val completedAtEpochMillis: Long?,
     val sessionStatus: String,
     val syncStatus: String,
+    val completedRepetitions: Int? = null,
+    val minimumKneeAngleDegrees: Double? = null,
+    val maximumKneeAngleDegrees: Double? = null,
 )

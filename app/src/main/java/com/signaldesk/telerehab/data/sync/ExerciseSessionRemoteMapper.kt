@@ -15,5 +15,9 @@ class ExerciseSessionRemoteMapper @Inject constructor() {
             "startedAtEpochMillis" to session.startedAt.toEpochMilli(),
             "completedAtEpochMillis" to session.completedAt?.toEpochMilli(),
             "sessionStatus" to session.status.name,
+
+            "completedRepetitions" to session.metrics?.completedRepetitions,
+            "minimumKneeAngleDegrees" to session.metrics?.minimumKneeAngleDegrees,
+            "maximumKneeAngleDegrees" to session.metrics?.maximumKneeAngleDegrees,
         )
 }

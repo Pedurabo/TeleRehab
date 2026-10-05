@@ -1,5 +1,7 @@
 package com.signaldesk.telerehab.domain.session.usecase
 
+import com.signaldesk.telerehab.domain.session.ExerciseSessionMetrics
+
 import com.signaldesk.telerehab.domain.session.sync.SessionSyncScheduler
 
 import com.signaldesk.telerehab.core.time.AppClock
@@ -18,7 +20,7 @@ class CompleteExerciseSession @Inject constructor(
 
     suspend operator fun invoke(
         sessionId: String,
-    ): ExerciseSession {
+        metrics: ExerciseSessionMetrics? = null,): ExerciseSession {
         require(sessionId.isNotBlank()) {
             "sessionId must not be blank"
         }
@@ -46,6 +48,7 @@ class CompleteExerciseSession @Inject constructor(
                 completedAt = completionTime,
                 status = ExerciseSessionStatus.COMPLETED,
                 syncStatus = SyncStatus.PENDING,
+                metrics = metrics,
             )
 
         repository.save(completed)

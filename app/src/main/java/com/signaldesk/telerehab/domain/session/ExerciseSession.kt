@@ -10,4 +10,5 @@ data class ExerciseSession(
     val completedAt: Instant?,
     val status: ExerciseSessionStatus,
     val syncStatus: SyncStatus,
+    val metrics: ExerciseSessionMetrics? = null,
 )
