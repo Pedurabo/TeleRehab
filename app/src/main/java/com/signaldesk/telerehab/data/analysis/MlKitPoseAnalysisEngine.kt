@@ -105,22 +105,19 @@ class MlKitPoseAnalysisEngine @Inject constructor() :
                         ?: return@mapNotNull null
 
                 val normalizedX =
-                    (
-                        landmark.position.x /
-                            imageWidth.toFloat()
-                    ).coerceIn(
-                        0f,
-                        1f,
-                    )
+                    landmark.position.x /
+                        imageWidth.toFloat()
 
                 val normalizedY =
-                    (
-                        landmark.position.y /
-                            imageHeight.toFloat()
-                    ).coerceIn(
-                        0f,
-                        1f,
-                    )
+                    landmark.position.y /
+                        imageHeight.toFloat()
+
+                if (
+                    normalizedX !in 0f..1f ||
+                    normalizedY !in 0f..1f
+                ) {
+                    return@mapNotNull null
+                }
 
                 domainType to
                     NormalizedPosePoint(
