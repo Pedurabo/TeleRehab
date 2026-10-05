@@ -8,11 +8,13 @@ import com.signaldesk.telerehab.domain.session.ExerciseSession
 import com.signaldesk.telerehab.domain.session.ExerciseSessionMetrics
 import com.signaldesk.telerehab.domain.session.ExerciseSessionStatus
 import com.signaldesk.telerehab.domain.session.SyncStatus
+import com.signaldesk.telerehab.domain.therapist.AddPatientForTherapist
 import com.signaldesk.telerehab.domain.therapist.CurrentWeekStartProvider
 import com.signaldesk.telerehab.domain.therapist.GetAssignedPatients
 import com.signaldesk.telerehab.domain.therapist.GetPatientAssignmentsForTherapist
 import com.signaldesk.telerehab.domain.therapist.GetPatientCompletedSessionsSinceForTherapist
 import com.signaldesk.telerehab.domain.therapist.GetPatientRecentSessionsForTherapist
+import com.signaldesk.telerehab.domain.therapist.PatientCredentials
 import com.signaldesk.telerehab.domain.therapist.SavePatientAssignmentForTherapist
 import com.signaldesk.telerehab.domain.therapist.TherapistExerciseAssignmentRemoteSource
 import com.signaldesk.telerehab.domain.therapist.TherapistExerciseSessionRemoteSource
@@ -100,6 +102,13 @@ class TherapistHomeViewModelTest {
                         ),
                     getAssignedPatients =
                         GetAssignedPatients(
+                            FakePatientRepository(
+                                therapistId = therapistId,
+                                patientId = patientId,
+                            ),
+                        ),
+                    addPatientForTherapist =
+                        AddPatientForTherapist(
                             FakePatientRepository(
                                 therapistId = therapistId,
                                 patientId = patientId,
@@ -227,6 +236,13 @@ class TherapistHomeViewModelTest {
                                 patientId = patientId,
                             ),
                         ),
+                    addPatientForTherapist =
+                        AddPatientForTherapist(
+                            FakePatientRepository(
+                                therapistId = therapistId,
+                                patientId = patientId,
+                            ),
+                        ),
                     getPatientAssignments =
                         GetPatientAssignmentsForTherapist(
                             assignmentSource,
@@ -330,6 +346,17 @@ class TherapistHomeViewModelTest {
             patientId: String,
         ): Boolean =
             true
+
+        override suspend fun addPatient(
+            therapistId: String,
+            email: String,
+            displayName: String?,
+        ): PatientCredentials =
+            PatientCredentials(
+                patientId = patient.patientId,
+                email = email,
+                temporaryPassword = "Temporary123",
+            )
     }
 
     private class FakeAssignmentSource(
