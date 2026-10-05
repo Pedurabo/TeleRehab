@@ -1,4 +1,4 @@
-﻿package com.signaldesk.telerehab.ui.therapist
+package com.signaldesk.telerehab.ui.therapist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -6,6 +6,7 @@ import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
 import com.signaldesk.telerehab.domain.auth.EnsureSignedIn
 import com.signaldesk.telerehab.domain.therapist.GetAssignedPatients
 import com.signaldesk.telerehab.domain.therapist.GetPatientAssignmentsForTherapist
+import com.signaldesk.telerehab.domain.therapist.SavePatientAssignmentForTherapist
 import com.signaldesk.telerehab.domain.therapist.TherapistPatient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -19,6 +20,8 @@ data class TherapistHomeUiState(
     val selectedPatientId: String? = null,
     val assignments: List<ExerciseAssignment> = emptyList(),
     val isLoading: Boolean = true,
+    val isSavingAssignment: Boolean = false,
+    val saveMessage: String? = null,
     val errorMessage: String? = null,
 )
 
@@ -27,6 +30,7 @@ class TherapistHomeViewModel @Inject constructor(
     private val ensureSignedIn: EnsureSignedIn,
     private val getAssignedPatients: GetAssignedPatients,
     private val getPatientAssignments: GetPatientAssignmentsForTherapist,
+    private val savePatientAssignment: SavePatientAssignmentForTherapist,
 ) : ViewModel() {
 
     private val _uiState =
@@ -101,4 +105,64 @@ class TherapistHomeViewModel @Inject constructor(
             }
         }
     }
-}
+
+    fun saveAssignment(
+        assignment: ExerciseAssignment,
+        targetRepetitions: Int,
+        flexedAtOrBelowDegrees: Double?,
+        extendedAtOrAboveDegrees: Double?,
+    ) {
+        val therapistId =
+            _uiState.value.therapistId
+                ?: return
+
+        viewModelScope.launch {
+            try {
+                _uiState.value =
+                    _uiState.value.copy(
+                        isSavingAssignment = true,
+                        errorMessage = null,
+                        saveMessage = null,
+                    )
+
+                val updated =
+                    assignment.copy(
+                        targetRepetitions = targetRepetitions,
+                        flexedAtOrBelowDegrees = flexedAtOrBelowDegrees,
+                        extendedAtOrAboveDegrees = extendedAtOrAboveDegrees,
+                    )
+
+                savePatientAssignment(
+                    therapistId = therapistId,
+                    assignment = updated,
+                )
+
+                val assignments =
+                    getPatientAssignments(
+                        therapistId = therapistId,
+                        patientId = updated.patientId,
+                    )
+
+                _uiState.value =
+                    _uiState.value.copy(
+                        assignments = assignments,
+                        isSavingAssignment = false,
+                        saveMessage = "Assignment updated.",
+                    )
+            } catch (error: Throwable) {
+                _uiState.value =
+                    _uiState.value.copy(
+                        isSavingAssignment = false,
+                        errorMessage =
+                            error.message
+                                ?: "Unable to update assignment.",
+                    )
+            }
+        }
+    }
+    fun clearSaveMessage() {
+        _uiState.value =
+            _uiState.value.copy(
+                saveMessage = null,
+            )
+    }}

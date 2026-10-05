@@ -1,4 +1,4 @@
-﻿package com.signaldesk.telerehab
+package com.signaldesk.telerehab
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -112,6 +112,10 @@ class MainActivity : ComponentActivity() {
                             state = therapistState,
                             onPatientSelected =
                                 therapistHomeViewModel::selectPatient,
+                            onSaveAssignment =
+                                therapistHomeViewModel::saveAssignment,
+                            onDismissSaveMessage =
+                                therapistHomeViewModel::clearSaveMessage,
                         )
                     }
 
