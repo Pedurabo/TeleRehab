@@ -5,16 +5,15 @@ import androidx.lifecycle.viewModelScope
 import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
 import com.signaldesk.telerehab.domain.auth.EnsureSignedIn
 import com.signaldesk.telerehab.domain.therapist.GetAssignedPatients
+import com.signaldesk.telerehab.domain.therapist.CurrentWeekStartProvider
 import com.signaldesk.telerehab.domain.therapist.GetPatientAssignmentsForTherapist
 import com.signaldesk.telerehab.domain.therapist.GetPatientRecentSessionsForTherapist
 import com.signaldesk.telerehab.domain.therapist.GetPatientCompletedSessionsSinceForTherapist
 import com.signaldesk.telerehab.domain.therapist.SavePatientAssignmentForTherapist
 import com.signaldesk.telerehab.domain.therapist.TherapistPatient
+import com.signaldesk.telerehab.domain.therapist.WeeklyAdherenceCalculator
 import com.signaldesk.telerehab.domain.session.ExerciseSession
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.time.DayOfWeek
-import java.time.ZoneId
-import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,6 +46,8 @@ class TherapistHomeViewModel @Inject constructor(
     private val getPatientCompletedSessionsSince:
         GetPatientCompletedSessionsSinceForTherapist,
     private val savePatientAssignment: SavePatientAssignmentForTherapist,
+    private val weeklyAdherenceCalculator: WeeklyAdherenceCalculator,
+    private val currentWeekStartProvider: CurrentWeekStartProvider,
 ) : ViewModel() {
 
     private val _uiState =
@@ -112,13 +113,7 @@ class TherapistHomeViewModel @Inject constructor(
                     )
 
                 val weekStart =
-                    ZonedDateTime
-                        .now(ZoneId.systemDefault())
-                        .with(DayOfWeek.MONDAY)
-                        .toLocalDate()
-                        .atStartOfDay(ZoneId.systemDefault())
-                        .toInstant()
-                        .toEpochMilli()
+                    currentWeekStartProvider.epochMillis()
 
                 val weeklySessions =
                     getPatientCompletedSessionsSince(
@@ -133,9 +128,11 @@ class TherapistHomeViewModel @Inject constructor(
                         ?.targetSessionsPerWeek
 
                 val weeklyAdherence =
-                    if (weeklyTarget != null && weeklyTarget > 0) {
-                        ((weeklySessions.size * 100) / weeklyTarget)
-                            .coerceAtMost(100)
+                    if (weeklyTarget != null) {
+                        weeklyAdherenceCalculator.calculate(
+                            completedSessions = weeklySessions.size,
+                            targetSessions = weeklyTarget,
+                        )
                     } else {
                         null
                     }
