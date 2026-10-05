@@ -2,7 +2,7 @@
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.signaldesk.telerehab.domain.auth.EnsureSignedIn
+import com.signaldesk.telerehab.domain.auth.AuthSession
 import com.signaldesk.telerehab.domain.identity.UserProfileRepository
 import com.signaldesk.telerehab.domain.identity.UserRole
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,20 +12,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 enum class AppDestination {
+    ENTRY,
     PATIENT,
+    THERAPIST_SIGN_IN,
     THERAPIST,
 }
 
 data class AppEntryUiState(
     val isLoading: Boolean = true,
     val destination: AppDestination? = null,
-    val userId: String? = null,
     val errorMessage: String? = null,
 )
 
 @HiltViewModel
 class AppEntryViewModel @Inject constructor(
-    private val ensureSignedIn: EnsureSignedIn,
+    private val authSession: AuthSession,
     private val userProfileRepository: UserProfileRepository,
 ) : ViewModel() {
 
@@ -44,29 +45,25 @@ class AppEntryViewModel @Inject constructor(
     private fun load() {
         viewModelScope.launch {
             try {
-                val userId =
-                    ensureSignedIn()
+                val currentUserId =
+                    authSession.currentUserId()
 
                 val profile =
-                    userProfileRepository.findById(
-                        userId = userId,
-                    )
+                    currentUserId?.let {
+                        userProfileRepository.findById(it)
+                    }
 
                 val destination =
-                    when (profile?.role) {
-                        UserRole.THERAPIST ->
-                            AppDestination.THERAPIST
-
-                        UserRole.PATIENT,
-                        null ->
-                            AppDestination.PATIENT
+                    if (profile?.role == UserRole.THERAPIST) {
+                        AppDestination.THERAPIST
+                    } else {
+                        AppDestination.ENTRY
                     }
 
                 _uiState.value =
                     AppEntryUiState(
                         isLoading = false,
                         destination = destination,
-                        userId = userId,
                     )
             } catch (error: Throwable) {
                 _uiState.value =
@@ -78,5 +75,29 @@ class AppEntryViewModel @Inject constructor(
                     )
             }
         }
+    }
+
+    fun continueAsPatient() {
+        _uiState.value =
+            _uiState.value.copy(
+                destination = AppDestination.PATIENT,
+                errorMessage = null,
+            )
+    }
+
+    fun openTherapistSignIn() {
+        _uiState.value =
+            _uiState.value.copy(
+                destination = AppDestination.THERAPIST_SIGN_IN,
+                errorMessage = null,
+            )
+    }
+
+    fun therapistSignedIn() {
+        _uiState.value =
+            _uiState.value.copy(
+                destination = AppDestination.THERAPIST,
+                errorMessage = null,
+            )
     }
 }

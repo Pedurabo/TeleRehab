@@ -10,7 +10,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.signaldesk.telerehab.ui.AppDestination
+import com.signaldesk.telerehab.ui.AppEntryScreen
 import com.signaldesk.telerehab.ui.AppEntryViewModel
+import com.signaldesk.telerehab.ui.auth.TherapistSignInScreen
+import com.signaldesk.telerehab.ui.auth.TherapistSignInViewModel
 import com.signaldesk.telerehab.ui.patient.PatientHomeScreen
 import com.signaldesk.telerehab.ui.patient.PatientHomeViewModel
 import com.signaldesk.telerehab.ui.session.GuidedSessionViewModel
@@ -27,6 +30,9 @@ class MainActivity : ComponentActivity() {
 
     private val patientHomeViewModel:
         PatientHomeViewModel by viewModels()
+
+    private val therapistSignInViewModel:
+        TherapistSignInViewModel by viewModels()
 
     private val therapistHomeViewModel:
         TherapistHomeViewModel by viewModels()
@@ -55,12 +61,48 @@ class MainActivity : ComponentActivity() {
 
                     appEntryState.errorMessage != null -> {
                         Text(
-                            text = appEntryState.errorMessage
-                                ?: "Unable to load TeleRehab.",
+                            text =
+                                appEntryState.errorMessage
+                                    ?: "Unable to load TeleRehab.",
                         )
                     }
 
-                    appEntryState.destination == AppDestination.THERAPIST -> {
+                    appEntryState.destination == AppDestination.ENTRY -> {
+                        AppEntryScreen(
+                            onContinueAsPatient =
+                                appEntryViewModel::continueAsPatient,
+                            onTherapistSignIn =
+                                appEntryViewModel::openTherapistSignIn,
+                        )
+                    }
+
+                    appEntryState.destination ==
+                        AppDestination.THERAPIST_SIGN_IN -> {
+                        val signInState by
+                            therapistSignInViewModel
+                                .uiState
+                                .collectAsState()
+
+                        TherapistSignInScreen(
+                            state = signInState,
+                            onEmailChanged =
+                                therapistSignInViewModel::updateEmail,
+                            onPasswordChanged =
+                                therapistSignInViewModel::updatePassword,
+                            onSignIn = {
+                                therapistSignInViewModel.signIn()
+                            },
+                        )
+
+                        if (
+                            signInState.signedInUserId != null
+                        ) {
+                            appEntryViewModel.therapistSignedIn()
+                        }
+                    }
+
+                    appEntryState.destination ==
+                        AppDestination.THERAPIST -> {
                         val therapistState by
                             therapistHomeViewModel
                                 .uiState

@@ -1,9 +1,9 @@
-package com.signaldesk.telerehab.data.auth
+﻿package com.signaldesk.telerehab.data.auth
 
 import com.google.firebase.auth.FirebaseAuth
 import com.signaldesk.telerehab.domain.auth.AuthSession
-import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+import kotlinx.coroutines.tasks.await
 
 class FirebaseAuthSession @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
@@ -21,5 +21,29 @@ class FirebaseAuthSession @Inject constructor(
         return requireNotNull(result.user?.uid) {
             "Firebase anonymous sign-in completed without a user ID."
         }
+    }
+
+    override suspend fun signInWithEmailAndPassword(
+        email: String,
+        password: String,
+    ): String {
+        require(email.isNotBlank())
+        require(password.isNotBlank())
+
+        val result =
+            firebaseAuth
+                .signInWithEmailAndPassword(
+                    email.trim(),
+                    password,
+                )
+                .await()
+
+        return requireNotNull(result.user?.uid) {
+            "Firebase sign-in completed without a user ID."
+        }
+    }
+
+    override fun signOut() {
+        firebaseAuth.signOut()
     }
 }

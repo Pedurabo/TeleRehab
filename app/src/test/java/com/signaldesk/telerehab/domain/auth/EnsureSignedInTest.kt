@@ -1,4 +1,4 @@
-package com.signaldesk.telerehab.domain.auth
+﻿package com.signaldesk.telerehab.domain.auth
 
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -53,5 +53,13 @@ class EnsureSignedInTest {
             signInCalls += 1
             return anonymousUserId
         }
+
+        override suspend fun signInWithEmailAndPassword(
+            email: String,
+            password: String,
+        ): String =
+            error("Not used by EnsureSignedInTest.")
+
+        override fun signOut() = Unit
     }
 }
