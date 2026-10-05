@@ -140,69 +140,83 @@ fun TherapistHomeScreen(
                         isSaving = state.isSavingAssignment,
                         onSave = onSaveAssignment,
                     )
-                }
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement =
-                            Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(
-                            text = "Progress summary",
-                            style = MaterialTheme.typography.titleMedium,
-                        )
+                    state.assignmentWeeklyAdherence
+                        .firstOrNull {
+                            it.assignmentId == assignment.id
+                        }
+                        ?.let { adherence ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalArrangement =
+                                        Arrangement.spacedBy(8.dp),
+                                ) {
+                                    Text(
+                                        text = "This week",
+                                        style =
+                                            MaterialTheme.typography.titleSmall,
+                                    )
 
-                        if (state.assignmentWeeklyAdherence.isEmpty()) {
-                            Text("No weekly adherence data.")
-                        } else {
-                            state.assignmentWeeklyAdherence.forEach { adherence ->
-                                Text(
-                                    text = adherence.assignmentTitle,
-                                    style = MaterialTheme.typography.titleSmall,
-                                )
+                                    Text(
+                                        "Completed: ${adherence.completedSessions} / ${adherence.targetSessions}",
+                                    )
 
-                                Text(
-                                    "Completed this week: ${adherence.completedSessions}",
-                                )
+                                    Text(
+                                        "Adherence: ${adherence.percent}%",
+                                    )
 
-                                Text(
-                                    "Weekly target: ${adherence.targetSessions}",
-                                )
+                                    Text(
+                                        "Status: ${
+                                            when (adherence.status) {
+                                                WeeklyAdherenceStatus.NOT_STARTED ->
+                                                    "Not started"
 
-                                Text(
-                                    "Weekly adherence: ${adherence.percent}%",
-                                )
+                                                WeeklyAdherenceStatus.IN_PROGRESS ->
+                                                    "In progress"
 
-                                Text(
-                                    "Status: ${
-                                        when (adherence.status) {
-                                            WeeklyAdherenceStatus.NOT_STARTED ->
-                                                "Not started"
-
-                                            WeeklyAdherenceStatus.IN_PROGRESS ->
-                                                "In progress"
-
-                                            WeeklyAdherenceStatus.COMPLETE ->
-                                                "Complete"
-                                        }
-                                    }",
-                                )
+                                                WeeklyAdherenceStatus.COMPLETE ->
+                                                    "Complete"
+                                            }
+                                        }",
+                                    )
+                                }
                             }
                         }
+                }
 
-                        state.latestCompletedRepetitions?.let {
-                            Text("Latest repetitions: $it")
-                        }
-
-                        state.repetitionTrend?.let { trend ->
+                if (
+                    state.latestCompletedRepetitions != null ||
+                    state.repetitionTrend != null
+                ) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement =
+                                Arrangement.spacedBy(8.dp),
+                        ) {
                             Text(
-                                "Repetition trend: ${
-                                    if (trend > 0) "+$trend" else trend
-                                }",
+                                text = "Recent performance",
+                                style = MaterialTheme.typography.titleMedium,
                             )
+
+                            state.latestCompletedRepetitions?.let {
+                                Text(
+                                    "Latest completed session: $it repetitions",
+                                )
+                            }
+
+                            state.repetitionTrend?.let { trend ->
+                                Text(
+                                    "Change from previous session: ${
+                                        if (trend > 0) "+$trend" else trend
+                                    } repetitions",
+                                )
+                            }
                         }
                     }
                 }
