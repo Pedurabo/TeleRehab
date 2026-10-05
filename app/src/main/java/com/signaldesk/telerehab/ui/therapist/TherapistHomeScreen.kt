@@ -252,21 +252,23 @@ fun TherapistHomeScreen(
                                     Arrangement.spacedBy(8.dp),
                             ) {
                                 Text(
-                                    text = "Session ${session.id}",
+                                    text =
+                                        session.completedAt
+                                            .toDisplayDateTime(),
                                     style =
                                         MaterialTheme.typography.titleSmall,
                                 )
 
-                                Text(
-                                    "Completed: ${session.completedAt.toDisplayDateTime()}",
-                                )
-
                                 session.metrics?.let { metrics ->
                                     Text(
-                                        "Repetitions: ${metrics.completedRepetitions}",
+                                        "${metrics.completedRepetitions} repetitions",
                                     )
 
                                     if (isSelected) {
+                                        Text(
+                                            "Session ID: ${session.id}",
+                                        )
+
                                         Text(
                                             "Assignment: ${session.assignmentId}",
                                         )
@@ -291,11 +293,29 @@ fun TherapistHomeScreen(
 
                                         Text("Tap again to close")
                                     } else {
-                                        Text("Tap for session details")
+                                        Text("Tap for details")
                                     }
-                                } ?: Text(
-                                    "No derived metrics recorded.",
-                                )
+                                } ?: run {
+                                    Text("No derived metrics recorded.")
+
+                                    if (isSelected) {
+                                        Text(
+                                            "Session ID: ${session.id}",
+                                        )
+
+                                        Text(
+                                            "Assignment: ${session.assignmentId}",
+                                        )
+
+                                        Text(
+                                            "Started: ${session.startedAt.toDisplayDateTime()}",
+                                        )
+
+                                        Text("Tap again to close")
+                                    } else {
+                                        Text("Tap for details")
+                                    }
+                                }
                             }
                         }
                     }
