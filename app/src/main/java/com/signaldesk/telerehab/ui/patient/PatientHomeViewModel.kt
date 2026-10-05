@@ -1,4 +1,4 @@
-﻿package com.signaldesk.telerehab.ui.patient
+package com.signaldesk.telerehab.ui.patient
 
 
 import androidx.lifecycle.ViewModel
@@ -54,11 +54,10 @@ class PatientHomeViewModel @Inject constructor(
         kotlinx.coroutines.flow.StateFlow<PatientHomeUiState> =
         _uiState
 
-    init {
-        load()
-    }
-
     fun load() {
+        _uiState.value =
+            PatientHomeUiState()
+
         viewModelScope.launch {
             try {
                 val patientId =
@@ -115,6 +114,11 @@ class PatientHomeViewModel @Inject constructor(
                     )
             }
         }
+    }
+
+    fun reset() {
+        _uiState.value =
+            PatientHomeUiState()
     }
 
     fun refresh() {

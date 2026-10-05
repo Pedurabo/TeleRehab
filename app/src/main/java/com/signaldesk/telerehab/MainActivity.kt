@@ -75,10 +75,14 @@ class MainActivity : ComponentActivity() {
 
                     appEntryState.destination == AppDestination.ENTRY -> {
                         AppEntryScreen(
-                            onContinueAsPatient =
-                                appEntryViewModel::continueAsPatient,
-                            onTherapistSignIn =
-                                appEntryViewModel::openTherapistSignIn,
+                            onContinueAsPatient = {
+                                patientSignInViewModel.reset()
+                                appEntryViewModel.continueAsPatient()
+                            },
+                            onTherapistSignIn = {
+                                therapistSignInViewModel.reset()
+                                appEntryViewModel.openTherapistSignIn()
+                            },
                         )
                     }
 
@@ -162,12 +166,18 @@ class MainActivity : ComponentActivity() {
                                 therapistHomeViewModel::addPatient,
                             onCreateKneeFlexionAssignment =
                                 therapistHomeViewModel::createKneeFlexionAssignment,
-                            onSignOut =
-                                appEntryViewModel::signOut,
+                            onSignOut = {
+                                therapistSignInViewModel.reset()
+                                appEntryViewModel.signOut()
+                            },
                         )
                     }
 
                     else -> {
+                        LaunchedEffect(Unit) {
+                            patientHomeViewModel.load()
+                        }
+
                         val patientState by
                             patientHomeViewModel
                                 .uiState
@@ -199,8 +209,11 @@ class MainActivity : ComponentActivity() {
                                 guidedSessionViewModel::submitFrame,
                             onConfigureTracking =
                                 guidedSessionViewModel::configureTracking,
-                            onSignOut =
-                                appEntryViewModel::signOut,
+                            onSignOut = {
+                                patientHomeViewModel.reset()
+                                patientSignInViewModel.reset()
+                                appEntryViewModel.signOut()
+                            },
                         )
                     }
                 }

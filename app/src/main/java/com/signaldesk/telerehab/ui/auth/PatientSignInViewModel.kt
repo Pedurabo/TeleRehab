@@ -30,6 +30,11 @@ class PatientSignInViewModel @Inject constructor(
     val uiState: StateFlow<PatientSignInUiState> =
         _uiState
 
+    fun reset() {
+        _uiState.value =
+            PatientSignInUiState()
+    }
+
     fun updateEmail(
         value: String,
     ) {

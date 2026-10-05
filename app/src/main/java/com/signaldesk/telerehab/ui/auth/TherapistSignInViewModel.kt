@@ -1,4 +1,4 @@
-﻿package com.signaldesk.telerehab.ui.auth
+package com.signaldesk.telerehab.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -29,6 +29,11 @@ class TherapistSignInViewModel @Inject constructor(
 
     val uiState: StateFlow<TherapistSignInUiState> =
         _uiState
+
+    fun reset() {
+        _uiState.value =
+            TherapistSignInUiState()
+    }
 
     fun updateEmail(
         value: String,

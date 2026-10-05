@@ -1,4 +1,4 @@
-﻿package com.signaldesk.telerehab.ui
+package com.signaldesk.telerehab.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -55,10 +55,15 @@ class AppEntryViewModel @Inject constructor(
                     }
 
                 val destination =
-                    if (profile?.role == UserRole.THERAPIST) {
-                        AppDestination.THERAPIST
-                    } else {
-                        AppDestination.ENTRY
+                    when (profile?.role) {
+                        UserRole.PATIENT ->
+                            AppDestination.PATIENT
+
+                        UserRole.THERAPIST ->
+                            AppDestination.THERAPIST
+
+                        else ->
+                            AppDestination.ENTRY
                     }
 
                 _uiState.value =
