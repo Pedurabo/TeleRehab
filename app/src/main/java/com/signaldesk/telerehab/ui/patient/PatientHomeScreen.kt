@@ -368,16 +368,51 @@ private fun AssignmentListContent(
 }
 
 @Composable
-private fun RecentSessionCard(session: ExerciseSession) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("${session.metrics?.completedRepetitions ?: 0} repetitions")
+private fun RecentSessionCard(
+    session: ExerciseSession,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement =
+                Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                text =
+                    "${session.metrics?.completedRepetitions ?: 0} repetitions",
+                style =
+                    MaterialTheme.typography.titleMedium,
+            )
+
             session.metrics?.let { metrics ->
-                if (metrics.minimumKneeAngleDegrees != null && metrics.maximumKneeAngleDegrees != null) {
-                    Text("Knee range: %.1f - %.1f degrees".format(metrics.minimumKneeAngleDegrees, metrics.maximumKneeAngleDegrees))
+                val minimum =
+                    metrics.minimumKneeAngleDegrees
+
+                val maximum =
+                    metrics.maximumKneeAngleDegrees
+
+                if (minimum != null && maximum != null) {
+                    Text(
+                        text =
+                            "Knee range: %.1f - %.1f degrees"
+                                .format(minimum, maximum),
+                        style =
+                            MaterialTheme.typography.bodyMedium,
+                    )
+                } else {
+                    Text(
+                        text = "No knee range recorded",
+                        style =
+                            MaterialTheme.typography.bodySmall,
+                    )
                 }
-            }
-            Text("Sync: ${session.syncStatus}")
+            } ?: Text(
+                text = "No session metrics recorded",
+                style =
+                    MaterialTheme.typography.bodySmall,
+            )
         }
     }
 }
