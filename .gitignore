@@ -19,3 +19,6 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 .firebase/
+
+# Local Firebase Android configuration
+app/google-services.json
