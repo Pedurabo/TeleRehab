@@ -93,6 +93,16 @@ class AppEntryViewModel @Inject constructor(
             )
     }
 
+    fun signOut() {
+        authSession.signOut()
+
+        _uiState.value =
+            AppEntryUiState(
+                isLoading = false,
+                destination = AppDestination.ENTRY,
+            )
+    }
+
     fun therapistSignedIn() {
         _uiState.value =
             _uiState.value.copy(

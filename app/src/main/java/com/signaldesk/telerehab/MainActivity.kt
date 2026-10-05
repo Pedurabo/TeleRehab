@@ -121,6 +121,8 @@ class MainActivity : ComponentActivity() {
                                 therapistHomeViewModel::saveAssignment,
                             onDismissSaveMessage =
                                 therapistHomeViewModel::clearSaveMessage,
+                            onSignOut =
+                                appEntryViewModel::signOut,
                         )
                     }
 

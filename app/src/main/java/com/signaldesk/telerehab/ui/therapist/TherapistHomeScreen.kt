@@ -43,6 +43,7 @@ fun TherapistHomeScreen(
         Double?,
     ) -> Unit,
     onDismissSaveMessage: () -> Unit,
+    onSignOut: () -> Unit,
 ) {
     LaunchedEffect(state.saveMessage) {
         if (state.saveMessage != null) {
@@ -67,6 +68,12 @@ fun TherapistHomeScreen(
             text = "Therapist dashboard",
             style = MaterialTheme.typography.headlineMedium,
         )
+
+        OutlinedButton(
+            onClick = onSignOut,
+        ) {
+            Text("Sign out")
+        }
 
         state.errorMessage?.let {
             Text(
