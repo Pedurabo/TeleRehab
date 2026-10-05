@@ -1,4 +1,4 @@
-package com.signaldesk.telerehab.ui.patient
+﻿package com.signaldesk.telerehab.ui.patient
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -6,8 +6,10 @@ import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
 import com.signaldesk.telerehab.domain.assignment.usecase.GetActiveExerciseAssignments
 import com.signaldesk.telerehab.domain.assignment.usecase.RefreshExerciseAssignments
 import com.signaldesk.telerehab.domain.auth.EnsureSignedIn
+import com.signaldesk.telerehab.domain.session.ExerciseSession
 import com.signaldesk.telerehab.domain.session.ExerciseSessionMetrics
 import com.signaldesk.telerehab.domain.session.usecase.CompleteExerciseSession
+import com.signaldesk.telerehab.domain.session.usecase.GetRecentCompletedSessions
 import com.signaldesk.telerehab.domain.session.usecase.StartExerciseSession
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -16,6 +18,7 @@ import kotlinx.coroutines.launch
 data class PatientHomeUiState(
     val patientId: String? = null,
     val assignments: List<ExerciseAssignment> = emptyList(),
+    val recentSessions: List<ExerciseSession> = emptyList(),
     val selectedAssignment: ExerciseAssignment? = null,
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
@@ -32,6 +35,7 @@ class PatientHomeViewModel @Inject constructor(
     private val refreshExerciseAssignments: RefreshExerciseAssignments,
     private val startExerciseSession: StartExerciseSession,
     private val completeExerciseSession: CompleteExerciseSession,
+    private val getRecentCompletedSessions: GetRecentCompletedSessions,
 ) : ViewModel() {
 
     private val _uiState =
@@ -58,10 +62,17 @@ class PatientHomeViewModel @Inject constructor(
                         patientId = patientId,
                     )
 
+                val recentSessions =
+                    getRecentCompletedSessions(
+                        patientId = patientId,
+                        limit = 10,
+                    )
+
                 _uiState.value =
                     _uiState.value.copy(
                         patientId = patientId,
                         assignments = cachedAssignments,
+                        recentSessions = recentSessions,
                         isLoading = false,
                         isRefreshing = true,
                         errorMessage = null,
@@ -184,10 +195,22 @@ class PatientHomeViewModel @Inject constructor(
                     metrics = metrics,
                 )
 
+                val patientId =
+                    _uiState.value.patientId
+
+                val recentSessions =
+                    patientId?.let {
+                        getRecentCompletedSessions(
+                            patientId = it,
+                            limit = 10,
+                        )
+                    } ?: emptyList()
+
                 _uiState.value =
                     _uiState.value.copy(
                         selectedAssignment = null,
                         startedSessionId = null,
+                        recentSessions = recentSessions,
                         errorMessage = null,
                     )
             } catch (error: Throwable) {
@@ -246,3 +269,4 @@ class PatientHomeViewModel @Inject constructor(
         }
     }
 }
+

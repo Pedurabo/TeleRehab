@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.signaldesk.telerehab.domain.analysis.PoseFrame
 import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
+import com.signaldesk.telerehab.domain.session.ExerciseSession
 import com.signaldesk.telerehab.ui.session.GuidedExerciseSessionScreen
 import com.signaldesk.telerehab.ui.session.GuidedSessionAnalysisState
 
@@ -133,7 +134,7 @@ private fun LoadingContent() {
 
         Text(
             text =
-                "Loading your rehabilitation planÃ¢â‚¬Â¦",
+                "Loading your rehabilitation planÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦",
             style =
                 MaterialTheme.typography.bodyLarge,
         )
@@ -204,7 +205,7 @@ private fun AssignmentListContent(
                 Text(
                     text =
                         if (state.isRefreshing) {
-                            "RefreshingÃ¢â‚¬Â¦"
+                            "RefreshingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦"
                         } else {
                             "Refresh"
                         },
@@ -241,6 +242,15 @@ private fun AssignmentListContent(
         Spacer(
             modifier = Modifier.height(12.dp),
         )
+
+        if (state.recentSessions.isNotEmpty()) {
+            Text(text = "Recent sessions", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            state.recentSessions.take(3).forEach { session ->
+                RecentSessionCard(session)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
 
         if (state.assignments.isEmpty()) {
             Card(
@@ -291,6 +301,21 @@ private fun AssignmentListContent(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun RecentSessionCard(session: ExerciseSession) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("${session.metrics?.completedRepetitions ?: 0} repetitions")
+            session.metrics?.let { metrics ->
+                if (metrics.minimumKneeAngleDegrees != null && metrics.maximumKneeAngleDegrees != null) {
+                    Text("Knee range: %.1f - %.1f degrees".format(metrics.minimumKneeAngleDegrees, metrics.maximumKneeAngleDegrees))
+                }
+            }
+            Text("Sync: ${session.syncStatus}")
         }
     }
 }
@@ -433,7 +458,7 @@ private fun AssignmentDetailContent(
                             "Session started"
 
                         isStartingSession ->
-                            "StartingÃ¢â‚¬Â¦"
+                            "StartingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦"
 
                         else ->
                             "Start session"
@@ -469,3 +494,6 @@ private fun AssignmentDetailContent(
         }
     }
 }
+
+
+
