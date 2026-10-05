@@ -1,4 +1,4 @@
-package com.signaldesk.telerehab.data.assignment.remote
+﻿package com.signaldesk.telerehab.data.assignment.remote
 
 import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
 import com.signaldesk.telerehab.domain.assignment.ExerciseAssignmentStatus
@@ -41,16 +41,16 @@ class FirestoreExerciseAssignmentMapper @Inject constructor() {
                 data.requireNumber(
                     key = "targetRepetitions",
                 ).toInt(),
+            targetSessionsPerWeek =
+                (data["targetSessionsPerWeek"] as? Number)
+                    ?.toInt()
+                    ?: 1,
             flexedAtOrBelowDegrees =
-                (
-                    data["flexedAtOrBelowDegrees"]
-                        as? Number
-                )?.toDouble(),
+                (data["flexedAtOrBelowDegrees"] as? Number)
+                    ?.toDouble(),
             extendedAtOrAboveDegrees =
-                (
-                    data["extendedAtOrAboveDegrees"]
-                        as? Number
-                )?.toDouble(),
+                (data["extendedAtOrAboveDegrees"] as? Number)
+                    ?.toDouble(),
             status =
                 ExerciseAssignmentStatus.valueOf(
                     data.requireString(
@@ -66,9 +66,7 @@ class FirestoreExerciseAssignmentMapper @Inject constructor() {
         val value =
             this[key] as? String
 
-        require(
-            !value.isNullOrBlank(),
-        ) {
+        require(!value.isNullOrBlank()) {
             "Missing or invalid Firestore string field: $key"
         }
 
@@ -78,9 +76,7 @@ class FirestoreExerciseAssignmentMapper @Inject constructor() {
     private fun Map<String, Any?>.requireNumber(
         key: String,
     ): Number =
-        requireNotNull(
-            this[key] as? Number,
-        ) {
+        requireNotNull(this[key] as? Number) {
             "Missing or invalid Firestore numeric field: $key"
         }
 }

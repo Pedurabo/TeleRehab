@@ -20,6 +20,8 @@ class GetActiveExerciseAssignmentsTest {
                     title = "Knee Flexion and Extension",
                     instructions = "Bend and straighten the knee through the prescribed range.",
                     targetRepetitions = 10,
+
+                    targetSessionsPerWeek = 1,
                     status = ExerciseAssignmentStatus.ACTIVE,
                 ),
             )

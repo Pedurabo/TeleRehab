@@ -146,6 +146,7 @@ class TherapistHomeViewModel @Inject constructor(
     fun saveAssignment(
         assignment: ExerciseAssignment,
         targetRepetitions: Int,
+        targetSessionsPerWeek: Int,
         flexedAtOrBelowDegrees: Double?,
         extendedAtOrAboveDegrees: Double?,
     ) {
@@ -165,6 +166,7 @@ class TherapistHomeViewModel @Inject constructor(
                 val updated =
                     assignment.copy(
                         targetRepetitions = targetRepetitions,
+                        targetSessionsPerWeek = targetSessionsPerWeek,
                         flexedAtOrBelowDegrees = flexedAtOrBelowDegrees,
                         extendedAtOrAboveDegrees = extendedAtOrAboveDegrees,
                     )

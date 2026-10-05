@@ -7,6 +7,7 @@ data class ExerciseAssignment(
     val title: String,
     val instructions: String,
     val targetRepetitions: Int,
+    val targetSessionsPerWeek: Int,
     val flexedAtOrBelowDegrees: Double? = null,
     val extendedAtOrAboveDegrees: Double? = null,
     val status: ExerciseAssignmentStatus,
@@ -18,6 +19,7 @@ data class ExerciseAssignment(
         require(title.isNotBlank())
         require(instructions.isNotBlank())
         require(targetRepetitions > 0)
+        require(targetSessionsPerWeek > 0)
 
         require(
             (flexedAtOrBelowDegrees == null) ==

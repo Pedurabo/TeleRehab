@@ -32,6 +32,7 @@ object DatabaseModule {
                 TeleRehabDatabase.MIGRATION_1_2,
                 TeleRehabDatabase.MIGRATION_2_3,
                 TeleRehabDatabase.MIGRATION_3_4,
+                TeleRehabDatabase.MIGRATION_4_5,
             )
             .build()
 

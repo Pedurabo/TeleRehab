@@ -1,4 +1,4 @@
-package com.signaldesk.telerehab.data.assignment
+﻿package com.signaldesk.telerehab.data.assignment
 
 import com.signaldesk.telerehab.data.assignment.local.ExerciseAssignmentEntity
 import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
@@ -17,6 +17,7 @@ class ExerciseAssignmentMapper @Inject constructor() {
             title = entity.title,
             instructions = entity.instructions,
             targetRepetitions = entity.targetRepetitions,
+            targetSessionsPerWeek = entity.targetSessionsPerWeek,
             flexedAtOrBelowDegrees =
                 entity.flexedAtOrBelowDegrees,
             extendedAtOrAboveDegrees =
@@ -38,6 +39,8 @@ class ExerciseAssignmentMapper @Inject constructor() {
             instructions = assignment.instructions,
             targetRepetitions =
                 assignment.targetRepetitions,
+            targetSessionsPerWeek =
+                assignment.targetSessionsPerWeek,
             flexedAtOrBelowDegrees =
                 assignment.flexedAtOrBelowDegrees,
             extendedAtOrAboveDegrees =

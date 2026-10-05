@@ -37,6 +37,7 @@ fun TherapistHomeScreen(
     onSaveAssignment: (
         ExerciseAssignment,
         Int,
+        Int,
         Double?,
         Double?,
     ) -> Unit,
@@ -218,6 +219,7 @@ private fun AssignmentEditor(
     onSave: (
         ExerciseAssignment,
         Int,
+        Int,
         Double?,
         Double?,
     ) -> Unit,
@@ -228,6 +230,10 @@ private fun AssignmentEditor(
 
     var repetitions by remember(assignment) {
         mutableStateOf(assignment.targetRepetitions.toString())
+    }
+
+    var sessionsPerWeek by remember(assignment) {
+        mutableStateOf(assignment.targetSessionsPerWeek.toString())
     }
 
     var flexedDegrees by remember(assignment) {
@@ -243,6 +249,7 @@ private fun AssignmentEditor(
     }
 
     val parsedRepetitions = repetitions.toIntOrNull()
+    val parsedSessionsPerWeek = sessionsPerWeek.toIntOrNull()
     val parsedFlexed = flexedDegrees.toDoubleOrNull()
     val parsedExtended = extendedDegrees.toDoubleOrNull()
 
@@ -259,6 +266,8 @@ private fun AssignmentEditor(
     val canSave =
         parsedRepetitions != null &&
             parsedRepetitions > 0 &&
+            parsedSessionsPerWeek != null &&
+            parsedSessionsPerWeek > 0 &&
             thresholdsValid &&
             !isSaving
 
@@ -282,6 +291,10 @@ private fun AssignmentEditor(
                     "Target repetitions: ${assignment.targetRepetitions}",
                 )
 
+                Text(
+                    "Target sessions per week: ${assignment.targetSessionsPerWeek}",
+                )
+
                 assignment.flexedAtOrBelowDegrees?.let {
                     Text("Flexed at or below: $it°")
                 }
@@ -294,6 +307,8 @@ private fun AssignmentEditor(
                     onClick = {
                         repetitions =
                             assignment.targetRepetitions.toString()
+                        sessionsPerWeek =
+                            assignment.targetSessionsPerWeek.toString()
                         flexedDegrees =
                             assignment.flexedAtOrBelowDegrees
                                 ?.toString()
@@ -313,6 +328,19 @@ private fun AssignmentEditor(
                     value = repetitions,
                     onValueChange = { repetitions = it },
                     label = { Text("Target repetitions") },
+                    keyboardOptions =
+                        KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                        ),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                OutlinedTextField(
+                    value = sessionsPerWeek,
+                    onValueChange = { sessionsPerWeek = it },
+                    label = {
+                        Text("Target sessions per week")
+                    },
                     keyboardOptions =
                         KeyboardOptions(
                             keyboardType = KeyboardType.Number,
@@ -351,6 +379,7 @@ private fun AssignmentEditor(
                         onSave(
                             assignment,
                             checkNotNull(parsedRepetitions),
+                            checkNotNull(parsedSessionsPerWeek),
                             parsedFlexed,
                             parsedExtended,
                         )
@@ -372,6 +401,8 @@ private fun AssignmentEditor(
                     onClick = {
                         repetitions =
                             assignment.targetRepetitions.toString()
+                        sessionsPerWeek =
+                            assignment.targetSessionsPerWeek.toString()
                         flexedDegrees =
                             assignment.flexedAtOrBelowDegrees
                                 ?.toString()

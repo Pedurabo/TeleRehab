@@ -20,6 +20,8 @@ class RefreshExerciseAssignmentsTest {
                 title = "Knee Flexion and Extension",
                 instructions = "Bend and straighten the knee.",
                 targetRepetitions = 10,
+
+                targetSessionsPerWeek = 1,
                 status = ExerciseAssignmentStatus.ACTIVE,
             )
 
@@ -70,6 +72,8 @@ class RefreshExerciseAssignmentsTest {
                             title = "Knee Flexion and Extension",
                             instructions = "Bend and straighten the knee.",
                             targetRepetitions = 10,
+
+                            targetSessionsPerWeek = 1,
                             status = ExerciseAssignmentStatus.ACTIVE,
                         ),
                     ),

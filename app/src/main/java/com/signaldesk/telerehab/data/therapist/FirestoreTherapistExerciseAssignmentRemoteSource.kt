@@ -1,4 +1,4 @@
-﻿package com.signaldesk.telerehab.data.therapist
+package com.signaldesk.telerehab.data.therapist
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -59,6 +59,7 @@ class FirestoreTherapistExerciseAssignmentRemoteSource @Inject constructor(
                     "title" to assignment.title,
                     "instructions" to assignment.instructions,
                     "targetRepetitions" to assignment.targetRepetitions,
+                    "targetSessionsPerWeek" to assignment.targetSessionsPerWeek,
                     "flexedAtOrBelowDegrees" to assignment.flexedAtOrBelowDegrees,
                     "extendedAtOrAboveDegrees" to assignment.extendedAtOrAboveDegrees,
                     "status" to assignment.status.name,
