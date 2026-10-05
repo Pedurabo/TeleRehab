@@ -1,6 +1,8 @@
-﻿package com.signaldesk.telerehab.di
+package com.signaldesk.telerehab.di
 
+import com.signaldesk.telerehab.data.therapist.FirestoreTherapistExerciseAssignmentRemoteSource
 import com.signaldesk.telerehab.data.therapist.FirestoreTherapistPatientRepository
+import com.signaldesk.telerehab.domain.therapist.TherapistExerciseAssignmentRemoteSource
 import com.signaldesk.telerehab.domain.therapist.TherapistPatientRepository
 import dagger.Binds
 import dagger.Module
@@ -17,4 +19,10 @@ abstract class TherapistModule {
     abstract fun bindTherapistPatientRepository(
         implementation: FirestoreTherapistPatientRepository,
     ): TherapistPatientRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTherapistExerciseAssignmentRemoteSource(
+        implementation: FirestoreTherapistExerciseAssignmentRemoteSource,
+    ): TherapistExerciseAssignmentRemoteSource
 }
