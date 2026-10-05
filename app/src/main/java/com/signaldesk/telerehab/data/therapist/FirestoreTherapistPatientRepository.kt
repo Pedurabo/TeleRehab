@@ -27,6 +27,11 @@ class FirestoreTherapistPatientRepository @Inject constructor(
             TherapistPatient(
                 therapistId = therapistId,
                 patientId = document.id,
+                displayName =
+                    document
+                        .getString("displayName")
+                        ?.trim()
+                        ?.takeIf { it.isNotBlank() },
             )
         }
     }

@@ -84,7 +84,7 @@ fun TherapistHomeScreen(
                         },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(patient.patientId.toPatientLabel())
+                        Text(patient.displayName ?: patient.patientId.toPatientLabel())
                     }
                 }
         }
@@ -95,7 +95,12 @@ fun TherapistHomeScreen(
                 style = MaterialTheme.typography.titleLarge,
             )
 
-            Text(patientId.toPatientLabel())
+            Text(
+                state.patients
+                    .firstOrNull { it.patientId == patientId }
+                    ?.displayName
+                    ?: patientId.toPatientLabel(),
+            )
 
             Text(
                 text = "Assignments",

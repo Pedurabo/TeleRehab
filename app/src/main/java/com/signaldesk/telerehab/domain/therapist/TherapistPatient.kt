@@ -3,4 +3,5 @@
 data class TherapistPatient(
     val therapistId: String,
     val patientId: String,
+    val displayName: String? = null,
 )
