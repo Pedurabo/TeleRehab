@@ -289,35 +289,33 @@ class PatientHomeViewModel @Inject constructor(
         val previousRepetitions =
             previousMetrics?.completedRepetitions
 
-        val latestRangeWidth =
-            latestMetrics?.let { metrics ->
+        val validRangeWidths =
+            mapNotNull { session ->
+                val metrics =
+                    session.metrics
+                        ?: return@mapNotNull null
+
                 val minimum =
                     metrics.minimumKneeAngleDegrees
 
                 val maximum =
                     metrics.maximumKneeAngleDegrees
 
-                if (minimum != null && maximum != null) {
+                if (
+                    minimum != null &&
+                    maximum != null
+                ) {
                     maximum - minimum
                 } else {
                     null
                 }
             }
+
+        val latestRangeWidth =
+            validRangeWidths.getOrNull(0)
 
         val previousRangeWidth =
-            previousMetrics?.let { metrics ->
-                val minimum =
-                    metrics.minimumKneeAngleDegrees
-
-                val maximum =
-                    metrics.maximumKneeAngleDegrees
-
-                if (minimum != null && maximum != null) {
-                    maximum - minimum
-                } else {
-                    null
-                }
-            }
+            validRangeWidths.getOrNull(1)
 
         return ProgressSummary(
             completedSessionCount = size,

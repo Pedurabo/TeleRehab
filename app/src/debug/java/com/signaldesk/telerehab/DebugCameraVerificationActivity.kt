@@ -63,8 +63,10 @@ class DebugCameraVerificationActivity :
                         "debug-camera-session",
                     analysisState =
                         analysisState,
-                    onPoseFrame =
-                        viewModel::submitFrame,
+                    onPoseObservation =
+                        viewModel::submitObservation,
+                    onPoseError =
+                        viewModel::reportCameraAnalysisError,
                 )
             }
         }

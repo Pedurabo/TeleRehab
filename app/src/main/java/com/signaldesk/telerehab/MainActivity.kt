@@ -245,8 +245,10 @@ class MainActivity : ComponentActivity() {
                             },
                             guidedAnalysisState =
                                 guidedAnalysisState,
-                            onPoseFrame =
-                                guidedSessionViewModel::submitFrame,
+                            onPoseObservation =
+                                guidedSessionViewModel::submitObservation,
+                            onPoseError =
+                                guidedSessionViewModel::reportCameraAnalysisError,
                             onConfigureTracking =
                                 guidedSessionViewModel::configureTracking,
                             onSignOut = {

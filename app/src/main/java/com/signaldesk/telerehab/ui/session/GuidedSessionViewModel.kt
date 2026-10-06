@@ -2,12 +2,13 @@ package com.signaldesk.telerehab.ui.session
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.signaldesk.telerehab.domain.analysis.BodyLandmark
 import com.signaldesk.telerehab.domain.analysis.CalculateKneeAngle
+import com.signaldesk.telerehab.domain.analysis.KneeMovementPhase
 import com.signaldesk.telerehab.domain.analysis.KneeRepetitionConfiguration
 import com.signaldesk.telerehab.domain.analysis.KneeRepetitionTracker
 import com.signaldesk.telerehab.domain.analysis.KneeSide
-import com.signaldesk.telerehab.domain.analysis.PoseAnalysisEngine
-import com.signaldesk.telerehab.domain.analysis.PoseFrame
+import com.signaldesk.telerehab.domain.analysis.PoseObservation
 import com.signaldesk.telerehab.domain.session.ExerciseSessionMetrics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -25,13 +26,17 @@ data class GuidedSessionAnalysisState(
     val minimumTrackedKneeAngleDegrees: Double? = null,
     val maximumTrackedKneeAngleDegrees: Double? = null,
     val targetRepetitions: Int = 0,
+    val flexedAtOrBelowDegrees: Double? = null,
+    val extendedAtOrAboveDegrees: Double? = null,
+    val trackedKneeAngleDegrees: Double? = null,
+    val movementPhase: KneeMovementPhase = KneeMovementPhase.UNKNOWN,
     val trackingConfigured: Boolean = false,
     val isAnalyzing: Boolean = false,
+    val analysisErrorMessage: String? = null,
 )
 
 @HiltViewModel
 class GuidedSessionViewModel @Inject constructor(
-    private val poseAnalysisEngine: PoseAnalysisEngine,
     private val calculateKneeAngle: CalculateKneeAngle,
 ) : ViewModel() {
 
@@ -48,7 +53,7 @@ class GuidedSessionViewModel @Inject constructor(
         KneeRepetitionTracker? = null
 
     private var trackedSide:
-        KneeSide = KneeSide.LEFT
+        KneeSide? = null
 
     fun configureTracking(
         targetRepetitions: Int,
@@ -83,7 +88,7 @@ class GuidedSessionViewModel @Inject constructor(
             }
 
         trackedSide =
-            KneeSide.LEFT
+            null
 
         _analysisState.value =
             _analysisState.value.copy(
@@ -92,125 +97,138 @@ class GuidedSessionViewModel @Inject constructor(
                 maximumTrackedKneeAngleDegrees = null,
                 targetRepetitions =
                     targetRepetitions,
+                flexedAtOrBelowDegrees =
+                    flexedAtOrBelowDegrees,
+                extendedAtOrAboveDegrees =
+                    extendedAtOrAboveDegrees,
+                trackedKneeAngleDegrees = null,
+                movementPhase = KneeMovementPhase.UNKNOWN,
                 trackingConfigured =
                     configured,
             )
     }
 
-    fun submitFrame(
-        frame: PoseFrame,
+    fun submitObservation(
+        observation: PoseObservation,
     ) {
+        val left =
+            calculateKneeAngle.invoke(
+                observation = observation,
+                side = KneeSide.LEFT,
+                minimumConfidence = 0.0f,
+            )
+
+        val right =
+            calculateKneeAngle.invoke(
+                observation = observation,
+                side = KneeSide.RIGHT,
+                minimumConfidence = 0.0f,
+            )
+
+        val selectedMeasurement =
+            when (trackedSide) {
+                KneeSide.LEFT ->
+                    left
+
+                KneeSide.RIGHT ->
+                    right
+
+                null -> {
+                    val selected =
+                        when {
+                            left == null ->
+                                right
+
+                            right == null ->
+                                left
+
+                            left.confidence >=
+                                right.confidence ->
+                                left
+
+                            else ->
+                                right
+                        }
+
+                    trackedSide =
+                        selected?.side
+
+                    selected
+                }
+            }
+
+        val repetitionState =
+            selectedMeasurement?.let {
+                repetitionTracker?.accept(
+                    measurement = it,
+                )
+            }
+
         val current =
             _analysisState.value
+
+        val angle =
+            selectedMeasurement?.angleDegrees
+
+        val minimum =
+            angle?.let {
+                current
+                    .minimumTrackedKneeAngleDegrees
+                    ?.let { old ->
+                        minOf(old, it)
+                    }
+                    ?: it
+            } ?: current.minimumTrackedKneeAngleDegrees
+
+        val maximum =
+            angle?.let {
+                current
+                    .maximumTrackedKneeAngleDegrees
+                    ?.let { old ->
+                        maxOf(old, it)
+                    }
+                    ?: it
+            } ?: current.maximumTrackedKneeAngleDegrees
 
         _analysisState.value =
             current.copy(
                 framesSubmitted =
                     current.framesSubmitted + 1,
+                framesAnalyzed =
+                    current.framesAnalyzed + 1,
+                lastLandmarkCount =
+                    observation.landmarks.size,
+                leftKneeAngleDegrees =
+                    left?.angleDegrees,
+                rightKneeAngleDegrees =
+                    right?.angleDegrees,
+                trackedKneeAngleDegrees =
+                    angle,
+                repetitions =
+                    repetitionState
+                        ?.repetitions
+                        ?: current.repetitions,
+                movementPhase =
+                    repetitionState
+                        ?.phase
+                        ?: current.movementPhase,
+                minimumTrackedKneeAngleDegrees =
+                    minimum,
+                maximumTrackedKneeAngleDegrees =
+                    maximum,
+                analysisErrorMessage = null,
             )
+    }
 
-        if (current.isAnalyzing) {
-            return
-        }
-
+    fun reportCameraAnalysisError(
+        error: Throwable,
+    ) {
         _analysisState.value =
             _analysisState.value.copy(
-                isAnalyzing = true,
+                analysisErrorMessage =
+                    error.message
+                        ?: "Camera pose analysis failed.",
             )
-
-        viewModelScope.launch {
-            try {
-                val observation =
-                    poseAnalysisEngine.analyze(
-                        frame = frame,
-                    )
-
-                val left =
-                    calculateKneeAngle.invoke(
-                        observation = observation,
-                        side = KneeSide.LEFT,
-                    )
-
-                val right =
-                    calculateKneeAngle.invoke(
-                        observation = observation,
-                        side = KneeSide.RIGHT,
-                    )
-
-                val trackedMeasurement =
-                    calculateKneeAngle.invoke(
-                        observation = observation,
-                        side = trackedSide,
-                    )
-
-                val repetitionState =
-                    trackedMeasurement?.let {
-                        repetitionTracker?.accept(
-                            measurement = it,
-                        )
-                    }
-
-                val currentState =
-                    _analysisState.value
-
-                val trackedAngleDegrees =
-                    trackedMeasurement?.angleDegrees
-
-                val updatedMinimumTrackedAngle =
-                    trackedAngleDegrees?.let { angle ->
-                        currentState
-                            .minimumTrackedKneeAngleDegrees
-                            ?.let { currentMinimum ->
-                                minOf(
-                                    currentMinimum,
-                                    angle,
-                                )
-                            }
-                            ?: angle
-                    } ?: currentState
-                        .minimumTrackedKneeAngleDegrees
-
-                val updatedMaximumTrackedAngle =
-                    trackedAngleDegrees?.let { angle ->
-                        currentState
-                            .maximumTrackedKneeAngleDegrees
-                            ?.let { currentMaximum ->
-                                maxOf(
-                                    currentMaximum,
-                                    angle,
-                                )
-                            }
-                            ?: angle
-                    } ?: currentState
-                        .maximumTrackedKneeAngleDegrees
-
-                _analysisState.value =
-                    currentState.copy(
-                        framesAnalyzed =
-                            currentState.framesAnalyzed + 1,
-                        lastLandmarkCount =
-                            observation.landmarks.size,
-                        leftKneeAngleDegrees =
-                            left?.angleDegrees,
-                        rightKneeAngleDegrees =
-                            right?.angleDegrees,
-                        repetitions =
-                            repetitionState
-                                ?.repetitions
-                                ?: currentState.repetitions,
-                        minimumTrackedKneeAngleDegrees =
-                            updatedMinimumTrackedAngle,
-                        maximumTrackedKneeAngleDegrees =
-                            updatedMaximumTrackedAngle,
-                        isAnalyzing = false,
-                    )
-            } catch (_: Throwable) {
-                _analysisState.value =
-                    _analysisState.value.copy(
-                        isAnalyzing = false,
-                    )
-            }
-        }
     }
 
     fun snapshotMetrics(): ExerciseSessionMetrics {

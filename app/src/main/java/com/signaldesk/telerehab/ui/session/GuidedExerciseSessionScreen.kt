@@ -37,7 +37,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.signaldesk.telerehab.domain.analysis.PoseFrame
+import com.signaldesk.telerehab.domain.analysis.KneeMovementPhase
+import com.signaldesk.telerehab.domain.analysis.PoseObservation
 import java.util.concurrent.Executors
 
 @Composable
@@ -46,7 +47,8 @@ fun GuidedExerciseSessionScreen(
     targetRepetitions: Int,
     sessionId: String,
     analysisState: GuidedSessionAnalysisState,
-    onPoseFrame: (PoseFrame) -> Unit,
+    onPoseObservation: (PoseObservation) -> Unit,
+    onPoseError: (Throwable) -> Unit,
     onFinishSession: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -98,7 +100,8 @@ fun GuidedExerciseSessionScreen(
                 sessionId = sessionId,
                 lifecycleOwner = lifecycleOwner,
                 analysisState = analysisState,
-                onPoseFrame = onPoseFrame,
+                onPoseObservation = onPoseObservation,
+                onPoseError = onPoseError,
                 onFinishSession = onFinishSession,
             )
         } else {
@@ -120,7 +123,8 @@ private fun CameraSessionContent(
     sessionId: String,
     lifecycleOwner: androidx.lifecycle.LifecycleOwner,
     analysisState: GuidedSessionAnalysisState,
-    onPoseFrame: (PoseFrame) -> Unit,
+    onPoseObservation: (PoseObservation) -> Unit,
+    onPoseError: (Throwable) -> Unit,
     onFinishSession: () -> Unit,
 ) {
     val context =
@@ -142,10 +146,14 @@ private fun CameraSessionContent(
 
     val analyzer =
         remember(
-            onPoseFrame,
+            onPoseObservation,
+            onPoseError,
         ) {
             CameraPoseFrameAnalyzer(
-                onFrame = onPoseFrame,
+                onObservation =
+                    onPoseObservation,
+                onError =
+                    onPoseError,
             )
         }
 
@@ -172,6 +180,7 @@ private fun CameraSessionContent(
         onDispose {
             cameraController.clearImageAnalysisAnalyzer()
             cameraController.unbind()
+            analyzer.close()
             analysisExecutor.shutdown()
         }
     }
@@ -232,6 +241,8 @@ private fun CameraSessionContent(
                 style =
                     MaterialTheme.typography.bodyLarge,
             )
+
+
         }
 
         Column(
@@ -259,47 +270,44 @@ private fun CameraSessionContent(
             }
 
             Text(
-                text = "Position yourself so your hip, knee, and ankle are visible.",
+                text =
+                    "${analysisState.repetitions} / $targetRepetitions repetitions",
+                color = Color.White,
+                style =
+                    MaterialTheme.typography.titleMedium,
+            )
+
+            Text(
+                text =
+                    sessionGuidance(
+                        state = analysisState,
+                    ),
                 color = Color.White,
                 style =
                     MaterialTheme.typography.bodyLarge,
             )
 
-            Text(
-                text =
-                    "Frames analyzed: ${analysisState.framesAnalyzed}",
-                color = Color.White,
-                style =
-                    MaterialTheme.typography.bodyMedium,
-            )
+            analysisState.trackedKneeAngleDegrees?.let { angle ->
+                Text(
+                    text =
+                        "Tracked knee angle: ${angle.toInt()}?",
+                    color = Color.White,
+                    style =
+                        MaterialTheme.typography.bodyMedium,
+                )
+            }
 
             Text(
                 text =
-                    "Landmarks observed: ${analysisState.lastLandmarkCount}",
-                color = Color.White,
-                style =
-                    MaterialTheme.typography.bodyMedium,
-            )
-
-            Text(
-                text =
-                    analysisState.leftKneeAngleDegrees
-                        ?.let {
-                            "Left knee angle: ${it.toInt()}Â°"
+                    "Tracking: ${
+                        if (
+                            analysisState.trackedKneeAngleDegrees != null
+                        ) {
+                            "leg detected"
+                        } else {
+                            "waiting for hip, knee, and ankle"
                         }
-                        ?: "Left knee angle: waiting for landmarks",
-                color = Color.White,
-                style =
-                    MaterialTheme.typography.bodyMedium,
-            )
-
-            Text(
-                text =
-                    analysisState.rightKneeAngleDegrees
-                        ?.let {
-                            "Right knee angle: ${it.toInt()}Â°"
-                        }
-                        ?: "Right knee angle: waiting for landmarks",
+                    }",
                 color = Color.White,
                 style =
                     MaterialTheme.typography.bodyMedium,
@@ -311,6 +319,62 @@ private fun CameraSessionContent(
                 style =
                     MaterialTheme.typography.bodySmall,
             )
+        }
+    }
+}
+
+private fun sessionGuidance(
+    state: GuidedSessionAnalysisState,
+): String {
+    val angle =
+        state.trackedKneeAngleDegrees
+
+    if (angle == null) {
+        return "Move so your hip, knee, and ankle are clearly visible."
+    }
+
+    if (!state.trackingConfigured) {
+        return "Keep the leg visible and move slowly through the exercise."
+    }
+
+    val flexed =
+        state.flexedAtOrBelowDegrees
+
+    val extended =
+        state.extendedAtOrAboveDegrees
+
+    return when (state.movementPhase) {
+        KneeMovementPhase.UNKNOWN -> {
+            if (
+                extended != null &&
+                angle < extended
+            ) {
+                "Straighten your knee to begin the repetition."
+            } else {
+                "Ready. Bend your knee slowly."
+            }
+        }
+
+        KneeMovementPhase.EXTENDED -> {
+            if (
+                flexed != null &&
+                angle > flexed
+            ) {
+                "Bend your knee a little more."
+            } else {
+                "Good bend. Now straighten your knee."
+            }
+        }
+
+        KneeMovementPhase.FLEXED -> {
+            if (
+                extended != null &&
+                angle < extended
+            ) {
+                "Straighten your knee to complete the repetition."
+            } else {
+                "Repetition complete. Bend again when ready."
+            }
         }
     }
 }

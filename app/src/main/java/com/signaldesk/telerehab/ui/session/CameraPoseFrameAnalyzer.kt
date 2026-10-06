@@ -2,109 +2,148 @@ package com.signaldesk.telerehab.ui.session
 
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import com.signaldesk.telerehab.domain.analysis.PoseFrame
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.pose.Pose
+import com.google.mlkit.vision.pose.PoseDetection
+import com.google.mlkit.vision.pose.PoseLandmark
+import com.google.mlkit.vision.pose.defaults.PoseDetectorOptions
+import com.signaldesk.telerehab.domain.analysis.BodyLandmark
+import com.signaldesk.telerehab.domain.analysis.NormalizedPosePoint
+import com.signaldesk.telerehab.domain.analysis.PoseObservation
 
 class CameraPoseFrameAnalyzer(
-    private val onFrame: (PoseFrame) -> Unit,
+    private val onObservation: (PoseObservation) -> Unit,
+    private val onError: (Throwable) -> Unit,
 ) : ImageAnalysis.Analyzer {
+
+    private val detector =
+        PoseDetection.getClient(
+            PoseDetectorOptions
+                .Builder()
+                .setDetectorMode(
+                    PoseDetectorOptions.STREAM_MODE,
+                )
+                .build(),
+        )
 
     override fun analyze(
         image: ImageProxy,
     ) {
-        try {
-            onFrame(
-                PoseFrame(
-                    width = image.width,
-                    height = image.height,
-                    rotationDegrees =
-                        image.imageInfo.rotationDegrees,
-                    timestampNanos =
-                        image.imageInfo.timestamp,
-                    pixels =
-                        image.toNv21(),
-                ),
-            )
-        } finally {
+        val mediaImage =
+            image.image
+
+        if (mediaImage == null) {
             image.close()
+            return
         }
+
+        val rotation =
+            image.imageInfo.rotationDegrees
+
+        val inputImage =
+            InputImage.fromMediaImage(
+                mediaImage,
+                rotation,
+            )
+
+        detector
+            .process(inputImage)
+            .addOnSuccessListener { pose ->
+                val rotated =
+                    rotation == 90 ||
+                        rotation == 270
+
+                val imageWidth =
+                    if (rotated) {
+                        image.height
+                    } else {
+                        image.width
+                    }
+
+                val imageHeight =
+                    if (rotated) {
+                        image.width
+                    } else {
+                        image.height
+                    }
+
+                onObservation(
+                    PoseObservation(
+                        timestampNanos =
+                            image.imageInfo.timestamp,
+                        landmarks =
+                            pose.toDomainLandmarks(
+                                imageWidth = imageWidth,
+                                imageHeight = imageHeight,
+                            ),
+                        imageWidth = imageWidth,
+                        imageHeight = imageHeight,
+                    ),
+                )
+            }
+            .addOnFailureListener { error ->
+                onError(error)
+            }
+            .addOnCompleteListener {
+                image.close()
+            }
     }
 
-    private fun ImageProxy.toNv21():
-        ByteArray {
-        require(planes.size >= 3) {
-            "YUV camera frame must contain three planes."
-        }
+    fun close() {
+        detector.close()
+    }
 
-        val result =
-            ByteArray(
-                width * height +
-                    width * height / 2,
+    private fun Pose.toDomainLandmarks(
+        imageWidth: Int,
+        imageHeight: Int,
+    ): Map<BodyLandmark, NormalizedPosePoint> {
+        val mapping =
+            listOf(
+                BodyLandmark.LEFT_HIP to
+                    PoseLandmark.LEFT_HIP,
+                BodyLandmark.LEFT_KNEE to
+                    PoseLandmark.LEFT_KNEE,
+                BodyLandmark.LEFT_ANKLE to
+                    PoseLandmark.LEFT_ANKLE,
+                BodyLandmark.RIGHT_HIP to
+                    PoseLandmark.RIGHT_HIP,
+                BodyLandmark.RIGHT_KNEE to
+                    PoseLandmark.RIGHT_KNEE,
+                BodyLandmark.RIGHT_ANKLE to
+                    PoseLandmark.RIGHT_ANKLE,
             )
 
-        var outputIndex = 0
+        return mapping
+            .mapNotNull { (domainType, mlKitType) ->
+                val landmark =
+                    getPoseLandmark(mlKitType)
+                        ?: return@mapNotNull null
 
-        val yPlane =
-            planes[0]
+                val x =
+                    landmark.position.x /
+                        imageWidth.toFloat()
 
-        val yBuffer =
-            yPlane.buffer.duplicate()
+                val y =
+                    landmark.position.y /
+                        imageHeight.toFloat()
 
-        for (row in 0 until height) {
-            val rowStart =
-                row * yPlane.rowStride
+                if (
+                    !x.isFinite() ||
+                    !y.isFinite()
+                ) {
+                    return@mapNotNull null
+                }
 
-            for (column in 0 until width) {
-                result[outputIndex++] =
-                    yBuffer.get(
-                        rowStart +
-                            column *
-                            yPlane.pixelStride,
+                domainType to
+                    NormalizedPosePoint(
+                        x = x.coerceIn(0f, 1f),
+                        y = y.coerceIn(0f, 1f),
+                        confidence =
+                            landmark
+                                .inFrameLikelihood
+                                .coerceIn(0f, 1f),
                     )
             }
-        }
-
-        val uPlane =
-            planes[1]
-
-        val vPlane =
-            planes[2]
-
-        val uBuffer =
-            uPlane.buffer.duplicate()
-
-        val vBuffer =
-            vPlane.buffer.duplicate()
-
-        val chromaHeight =
-            height / 2
-
-        val chromaWidth =
-            width / 2
-
-        for (row in 0 until chromaHeight) {
-            val uRowStart =
-                row * uPlane.rowStride
-
-            val vRowStart =
-                row * vPlane.rowStride
-
-            for (column in 0 until chromaWidth) {
-                result[outputIndex++] =
-                    vBuffer.get(
-                        vRowStart +
-                            column *
-                            vPlane.pixelStride,
-                    )
-
-                result[outputIndex++] =
-                    uBuffer.get(
-                        uRowStart +
-                            column *
-                            uPlane.pixelStride,
-                    )
-            }
-        }
-
-        return result
+            .toMap()
     }
 }

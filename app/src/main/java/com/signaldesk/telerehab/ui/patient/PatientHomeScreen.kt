@@ -25,7 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.signaldesk.telerehab.domain.analysis.PoseFrame
+import com.signaldesk.telerehab.domain.analysis.PoseObservation
 import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
 import com.signaldesk.telerehab.domain.session.ExerciseSession
 import com.signaldesk.telerehab.ui.session.GuidedExerciseSessionScreen
@@ -40,7 +40,8 @@ fun PatientHomeScreen(
     onStartSession: () -> Unit,
     onFinishSession: () -> Unit = {},
     guidedAnalysisState: GuidedSessionAnalysisState,
-    onPoseFrame: (PoseFrame) -> Unit,
+    onPoseObservation: (PoseObservation) -> Unit,
+    onPoseError: (Throwable) -> Unit,
     onConfigureTracking: (Int, Double?, Double?) -> Unit,
     modifier: Modifier = Modifier,
     onSignOut: () -> Unit,
@@ -85,8 +86,10 @@ fun PatientHomeScreen(
                             state.startedSessionId,
                         analysisState =
                             guidedAnalysisState,
-                        onPoseFrame =
-                            onPoseFrame,
+                        onPoseObservation =
+                            onPoseObservation,
+                        onPoseError =
+                            onPoseError,
                         onFinishSession = onFinishSession,
                     )
                 }
@@ -254,10 +257,13 @@ private fun AssignmentListContent(
 
         Text(
             text = "Assigned exercises",
-            style = MaterialTheme.typography.titleMedium,
+            style =
+                MaterialTheme.typography.titleLarge,
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(12.dp),
+        )
 
         if (state.assignments.isEmpty()) {
             Card(
@@ -266,17 +272,13 @@ private fun AssignmentListContent(
                 Column(
                     modifier =
                         Modifier.padding(20.dp),
+                    verticalArrangement =
+                        Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
-                        text =
-                            "No active exercises yet",
+                        text = "No active exercises yet",
                         style =
                             MaterialTheme.typography.titleMedium,
-                    )
-
-                    Spacer(
-                        modifier =
-                            Modifier.height(6.dp),
                     )
 
                     Text(
@@ -289,89 +291,137 @@ private fun AssignmentListContent(
             }
         } else {
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement =
+                    Arrangement.spacedBy(12.dp),
             ) {
                 state.assignments.forEach { assignment ->
                     AssignmentCard(
                         assignment = assignment,
-                        onOpen = { onAssignmentSelected(assignment) },
+                        onOpen = {
+                            onAssignmentSelected(
+                                assignment,
+                            )
+                        },
                     )
                 }
             }
         }
 
+        Spacer(
+            modifier = Modifier.height(32.dp),
+        )
 
         if (state.recentCompletedSessionCount > 0) {
+            Text(
+                text = "Progress",
+                style =
+                    MaterialTheme.typography.titleLarge,
+            )
+
+            Spacer(
+                modifier = Modifier.height(12.dp),
+            )
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier =
+                        Modifier.padding(20.dp),
                     verticalArrangement =
-                        Arrangement.spacedBy(8.dp),
+                        Arrangement.spacedBy(10.dp),
                 ) {
                     Text(
-                        text = "Progress",
-                        style = MaterialTheme.typography.titleMedium,
+                        text =
+                            "Completed sessions: ${state.recentCompletedSessionCount}",
+                        style =
+                            MaterialTheme.typography.bodyLarge,
                     )
 
                     Text(
-                        "Completed sessions: ${state.recentCompletedSessionCount}",
-                    )
-
-                    Text(
-                        "Recent repetitions: ${state.recentTotalRepetitions}",
+                        text =
+                            "Recent repetitions: ${state.recentTotalRepetitions}",
                     )
 
                     state.latestCompletedRepetitions?.let {
-                        Text("Latest repetitions: $it")
-                    }
-
-                    state.repetitionChangeFromPrevious?.let { change ->
                         Text(
-                            "Repetitions vs previous: ${
-                                if (change >= 0) "+$change" else change
-                            }",
+                            text =
+                                "Latest repetitions: $it",
                         )
                     }
 
-                    state.latestKneeRangeWidthDegrees?.let { width ->
-                        Text(
-                            "Latest knee range width: %.1f degrees"
-                                .format(width),
-                        )
-                    }
+                    state.repetitionChangeFromPrevious
+                        ?.let { change ->
+                            Text(
+                                text =
+                                    "Repetitions vs previous: ${
+                                        if (change >= 0) {
+                                            "+$change"
+                                        } else {
+                                            change
+                                        }
+                                    }",
+                            )
+                        }
+
+                    state.latestKneeRangeWidthDegrees
+                        ?.let { width ->
+                            Text(
+                                text =
+                                    "Latest knee range: %.1f degrees"
+                                        .format(width),
+                            )
+                        }
 
                     state.kneeRangeChangeFromPreviousDegrees
                         ?.let { change ->
                             Text(
-                                "Range width vs previous: ${
-                                    if (change >= 0) "+" else ""
-                                }%.1f degrees".format(change),
+                                text =
+                                    if (
+                                        kotlin.math.abs(change) < 0.05
+                                    ) {
+                                        "Range vs previous: no measurable change"
+                                    } else {
+                                        "Range vs previous: ${
+                                            if (change > 0) "+" else ""
+                                        }%.1f degrees".format(change)
+                                    },
                             )
                         }
                 }
             }
 
             Spacer(
-                modifier = Modifier.height(16.dp),
+                modifier = Modifier.height(32.dp),
             )
         }
 
-        HorizontalDivider()
-        Spacer(modifier = Modifier.height(16.dp))
-
         if (state.recentSessions.isNotEmpty()) {
-            Text(text = "Recent sessions", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            state.recentSessions.forEach { session ->
-                RecentSessionCard(session)
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-        }
+            Text(
+                text = "Recent sessions",
+                style =
+                    MaterialTheme.typography.titleLarge,
+            )
 
-        HorizontalDivider()
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(
+                modifier = Modifier.height(12.dp),
+            )
+
+            Column(
+                verticalArrangement =
+                    Arrangement.spacedBy(12.dp),
+            ) {
+                state.recentSessions.forEach { session ->
+                    RecentSessionCard(
+                        session = session,
+                    )
+                }
+            }
+
+            Spacer(
+                modifier = Modifier.height(32.dp),
+            )
+        }
 
     }
 }
