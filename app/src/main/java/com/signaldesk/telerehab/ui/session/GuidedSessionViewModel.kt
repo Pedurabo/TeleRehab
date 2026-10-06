@@ -1,8 +1,6 @@
 package com.signaldesk.telerehab.ui.session
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.signaldesk.telerehab.domain.analysis.BodyLandmark
 import com.signaldesk.telerehab.domain.analysis.CalculateKneeAngle
 import com.signaldesk.telerehab.domain.analysis.KneeMovementPhase
 import com.signaldesk.telerehab.domain.analysis.KneeRepetitionConfiguration
@@ -14,7 +12,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 data class GuidedSessionAnalysisState(
     val framesSubmitted: Long = 0,
@@ -55,6 +52,12 @@ class GuidedSessionViewModel @Inject constructor(
     private var trackedSide:
         KneeSide? = null
 
+    private var missingTrackedSideFrames:
+        Int = 0
+
+    private val sideReacquisitionFrameThreshold:
+        Int = 5
+
     fun configureTracking(
         targetRepetitions: Int,
         flexedAtOrBelowDegrees: Double?,
@@ -89,6 +92,9 @@ class GuidedSessionViewModel @Inject constructor(
 
         trackedSide =
             null
+
+        missingTrackedSideFrames =
+            0
 
         _analysisState.value =
             _analysisState.value.copy(
@@ -127,11 +133,51 @@ class GuidedSessionViewModel @Inject constructor(
 
         val selectedMeasurement =
             when (trackedSide) {
-                KneeSide.LEFT ->
-                    left
+                KneeSide.LEFT -> {
+                    if (left != null) {
+                        missingTrackedSideFrames = 0
+                        left
+                    } else {
+                        missingTrackedSideFrames += 1
 
-                KneeSide.RIGHT ->
-                    right
+                        if (
+                            missingTrackedSideFrames >=
+                            sideReacquisitionFrameThreshold
+                        ) {
+                            trackedSide =
+                                right?.side
+
+                            missingTrackedSideFrames = 0
+
+                            right
+                        } else {
+                            null
+                        }
+                    }
+                }
+
+                KneeSide.RIGHT -> {
+                    if (right != null) {
+                        missingTrackedSideFrames = 0
+                        right
+                    } else {
+                        missingTrackedSideFrames += 1
+
+                        if (
+                            missingTrackedSideFrames >=
+                            sideReacquisitionFrameThreshold
+                        ) {
+                            trackedSide =
+                                left?.side
+
+                            missingTrackedSideFrames = 0
+
+                            left
+                        } else {
+                            null
+                        }
+                    }
+                }
 
                 null -> {
                     val selected =
@@ -152,6 +198,8 @@ class GuidedSessionViewModel @Inject constructor(
 
                     trackedSide =
                         selected?.side
+
+                    missingTrackedSideFrames = 0
 
                     selected
                 }
