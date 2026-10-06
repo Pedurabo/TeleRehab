@@ -75,6 +75,26 @@ class SessionGuidanceTest {
     }
 
     @Test
+    fun reachingTargetStopsFurtherMovementGuidance() {
+        val state =
+            configuredState(
+                angle = 165.0,
+                phase = KneeMovementPhase.EXTENDED,
+            ).copy(
+                repetitions = 10,
+                targetRepetitions = 10,
+            )
+
+        assertEquals(
+            "Target complete. Finish the session when you are ready.",
+            sessionGuidance(
+                exerciseId = "knee-flexion",
+                state = state,
+            ),
+        )
+    }
+
+    @Test
     fun missingPoseUsesSharedVisibilityGuidance() {
         val state =
             configuredState(

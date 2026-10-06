@@ -331,6 +331,13 @@ internal fun sessionGuidance(
     exerciseId: String,
     state: GuidedSessionAnalysisState,
 ): String {
+    if (
+        state.targetRepetitions > 0 &&
+        state.repetitions >= state.targetRepetitions
+    ) {
+        return "Target complete. Finish the session when you are ready."
+    }
+
     val angle =
         state.trackedKneeAngleDegrees
 
