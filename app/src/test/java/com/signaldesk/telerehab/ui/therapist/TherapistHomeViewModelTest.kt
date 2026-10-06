@@ -286,6 +286,137 @@ class TherapistHomeViewModelTest {
         }
 
 
+    @Test
+    fun createsSeatedKneeExtensionAssignmentForSelectedPatient() =
+        runTest {
+            val therapistId = "therapist-1"
+            val patientId = "patient-1"
+
+            val assignmentSource =
+                FakeAssignmentSource(
+                    assignments = emptyList(),
+                )
+
+            val sessionSource =
+                FakeSessionSource(
+                    recentSessions = emptyList(),
+                    weeklySessions = emptyList(),
+                )
+
+            val patientRepository =
+                FakePatientRepository(
+                    therapistId = therapistId,
+                    patientId = patientId,
+                )
+
+            val viewModel =
+                TherapistHomeViewModel(
+                    ensureSignedIn =
+                        EnsureSignedIn(
+                            FakeAuthSession(therapistId),
+                        ),
+                    getAssignedPatients =
+                        GetAssignedPatients(
+                            patientRepository,
+                        ),
+                    addPatientForTherapist =
+                        AddPatientForTherapist(
+                            patientRepository,
+                        ),
+                    getPatientAssignments =
+                        GetPatientAssignmentsForTherapist(
+                            assignmentSource,
+                        ),
+                    getPatientRecentSessions =
+                        GetPatientRecentSessionsForTherapist(
+                            sessionSource,
+                        ),
+                    getPatientCompletedSessionsSince =
+                        GetPatientCompletedSessionsSinceForTherapist(
+                            sessionSource,
+                        ),
+                    savePatientAssignment =
+                        SavePatientAssignmentForTherapist(
+                            assignmentSource,
+                        ),
+                    weeklyAdherenceCalculator =
+                        WeeklyAdherenceCalculator(),
+                    currentWeekStartProvider =
+                        CurrentWeekStartProvider(),
+                )
+
+            advanceUntilIdle()
+
+            viewModel.selectPatient(patientId)
+            advanceUntilIdle()
+
+            viewModel.createSeatedKneeExtensionAssignment()
+            advanceUntilIdle()
+
+            val assignment =
+                viewModel
+                    .uiState
+                    .value
+                    .assignments
+                    .single()
+
+            assertEquals(
+                "seated-knee-extension-test",
+                assignment.id,
+            )
+
+            assertEquals(
+                patientId,
+                assignment.patientId,
+            )
+
+            assertEquals(
+                "seated-knee-extension",
+                assignment.exerciseId,
+            )
+
+            assertEquals(
+                "Seated Knee Extension",
+                assignment.title,
+            )
+
+            assertEquals(
+                10,
+                assignment.targetRepetitions,
+            )
+
+            assertEquals(
+                3,
+                assignment.targetSessionsPerWeek,
+            )
+
+            assertEquals(
+                100.0,
+                requireNotNull(
+                    assignment.flexedAtOrBelowDegrees,
+                ),
+                0.0,
+            )
+
+            assertEquals(
+                160.0,
+                requireNotNull(
+                    assignment.extendedAtOrAboveDegrees,
+                ),
+                0.0,
+            )
+
+            assertEquals(
+                ExerciseAssignmentStatus.ACTIVE,
+                assignment.status,
+            )
+
+            assertEquals(
+                "Seated Knee Extension assignment created.",
+                viewModel.uiState.value.saveMessage,
+            )
+        }
+
     private fun completedSession(
         id: String,
         patientId: String,
@@ -360,19 +491,32 @@ class TherapistHomeViewModelTest {
     }
 
     private class FakeAssignmentSource(
-        private val assignments: List<ExerciseAssignment>,
+        assignments: List<ExerciseAssignment>,
     ) : TherapistExerciseAssignmentRemoteSource {
+
+        private val assignments =
+            assignments.toMutableList()
 
         override suspend fun fetchForPatient(
             therapistId: String,
             patientId: String,
         ): List<ExerciseAssignment> =
             assignments
+                .filter {
+                    it.patientId == patientId
+                }
 
         override suspend fun saveForPatient(
             therapistId: String,
             assignment: ExerciseAssignment,
-        ) = Unit
+        ) {
+            assignments.removeAll {
+                it.id == assignment.id &&
+                    it.patientId == assignment.patientId
+            }
+
+            assignments += assignment
+        }
     }
 
     private class FakeSessionSource(

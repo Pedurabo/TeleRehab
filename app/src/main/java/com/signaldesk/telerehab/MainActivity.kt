@@ -206,6 +206,8 @@ class MainActivity : ComponentActivity() {
                                 therapistHomeViewModel::dismissGeneratedPatientCredentials,
                             onCreateKneeFlexionAssignment =
                                 therapistHomeViewModel::createKneeFlexionAssignment,
+                            onCreateSeatedKneeExtensionAssignment =
+                                therapistHomeViewModel::createSeatedKneeExtensionAssignment,
                             onSignOut = {
                                 therapistSignInViewModel.reset()
                                 appEntryViewModel.signOut()

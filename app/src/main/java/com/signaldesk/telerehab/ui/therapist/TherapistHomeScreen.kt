@@ -50,6 +50,7 @@ fun TherapistHomeScreen(
     onAddPatient: () -> Unit,
     onDismissGeneratedPatientCredentials: () -> Unit,
     onCreateKneeFlexionAssignment: () -> Unit,
+    onCreateSeatedKneeExtensionAssignment: () -> Unit,
     onSignOut: () -> Unit,
 ) {
     LaunchedEffect(state.saveMessage) {
@@ -317,37 +318,94 @@ fun TherapistHomeScreen(
                     )
                 }
 
-                if (state.assignments.isEmpty()) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
+                val hasKneeFlexion =
+                    state.assignments.any {
+                        it.exerciseId == "knee-flexion"
+                    }
+
+                val hasSeatedKneeExtension =
+                    state.assignments.any {
+                        it.exerciseId ==
+                            "seated-knee-extension"
+                    }
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(
+                        modifier =
+                            Modifier.padding(16.dp),
+                        verticalArrangement =
+                            Arrangement.spacedBy(12.dp),
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement =
-                                Arrangement.spacedBy(12.dp),
+                        Text(
+                            text = "Add exercise",
+                            style =
+                                MaterialTheme.typography.titleMedium,
+                        )
+
+                        Text(
+                            text =
+                                "Build this patient's rehabilitation program.",
+                            style =
+                                MaterialTheme.typography.bodyMedium,
+                        )
+
+                        Button(
+                            onClick =
+                                onCreateKneeFlexionAssignment,
+                            enabled =
+                                !state.isSavingAssignment &&
+                                    !hasKneeFlexion,
+                            modifier =
+                                Modifier.fillMaxWidth(),
                         ) {
                             Text(
-                                text = "No assignments for this patient.",
-                            )
+                                when {
+                                    hasKneeFlexion ->
+                                        "Knee Flexion assigned"
 
-                            Button(
-                                onClick =
-                                    onCreateKneeFlexionAssignment,
-                                enabled =
-                                    !state.isSavingAssignment,
-                                modifier =
-                                    Modifier.fillMaxWidth(),
-                            ) {
-                                Text(
-                                    if (state.isSavingAssignment) {
+                                    state.isSavingAssignment ->
                                         "Creating..."
-                                    } else {
-                                        "Create Knee Flexion assignment"
-                                    },
-                                )
-                            }
+
+                                    else ->
+                                        "Add Knee Flexion"
+                                },
+                            )
+                        }
+
+                        Button(
+                            onClick =
+                                onCreateSeatedKneeExtensionAssignment,
+                            enabled =
+                                !state.isSavingAssignment &&
+                                    !hasSeatedKneeExtension,
+                            modifier =
+                                Modifier.fillMaxWidth(),
+                        ) {
+                            Text(
+                                when {
+                                    hasSeatedKneeExtension ->
+                                        "Seated Knee Extension assigned"
+
+                                    state.isSavingAssignment ->
+                                        "Creating..."
+
+                                    else ->
+                                        "Add Seated Knee Extension"
+                                },
+                            )
                         }
                     }
+                }
+
+                if (state.assignments.isEmpty()) {
+                    Text(
+                        text =
+                            "No exercises assigned yet.",
+                        style =
+                            MaterialTheme.typography.bodyMedium,
+                    )
                 }
 
                 state.assignments.forEach { assignment ->

@@ -360,6 +360,77 @@ class TherapistHomeViewModel @Inject constructor(
         }
     }
 
+    fun createSeatedKneeExtensionAssignment() {
+        val state =
+            _uiState.value
+
+        val therapistId =
+            state.therapistId
+                ?: return
+
+        val patientId =
+            state.selectedPatientId
+                ?: return
+
+        if (state.isSavingAssignment) {
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                _uiState.value =
+                    _uiState.value.copy(
+                        isSavingAssignment = true,
+                        errorMessage = null,
+                        saveMessage = null,
+                    )
+
+                val assignment =
+                    ExerciseAssignment(
+                        id = "seated-knee-extension-test",
+                        patientId = patientId,
+                        exerciseId = "seated-knee-extension",
+                        title = "Seated Knee Extension",
+                        instructions =
+                            "Sit upright with your thigh supported. " +
+                                "Slowly straighten your knee, then return to the bent position.",
+                        targetRepetitions = 10,
+                        targetSessionsPerWeek = 3,
+                        flexedAtOrBelowDegrees = 100.0,
+                        extendedAtOrAboveDegrees = 160.0,
+                        status = ExerciseAssignmentStatus.ACTIVE,
+                    )
+
+                savePatientAssignment(
+                    therapistId = therapistId,
+                    assignment = assignment,
+                )
+
+                val assignments =
+                    getPatientAssignments(
+                        therapistId = therapistId,
+                        patientId = patientId,
+                    )
+
+                _uiState.value =
+                    _uiState.value.copy(
+                        assignments = assignments,
+                        isSavingAssignment = false,
+                        saveMessage =
+                            "Seated Knee Extension assignment created.",
+                    )
+            } catch (error: Throwable) {
+                _uiState.value =
+                    _uiState.value.copy(
+                        isSavingAssignment = false,
+                        errorMessage =
+                            error.message
+                                ?: "Unable to create assignment.",
+                    )
+            }
+        }
+    }
+
     fun saveAssignment(
         assignment: ExerciseAssignment,
         targetRepetitions: Int,
