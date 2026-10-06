@@ -20,6 +20,7 @@ fun PatientSignInScreen(
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
     onSignIn: () -> Unit,
+    onForgotPassword: () -> Unit,
     onBack: () -> Unit,
 ) {
     Column(
@@ -55,7 +56,16 @@ fun PatientSignInScreen(
         )
 
         OutlinedButton(
+            onClick = onForgotPassword,
+            enabled = !state.isWorking,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Forgot password?")
+        }
+
+        OutlinedButton(
             onClick = onBack,
+            enabled = !state.isWorking,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Back")
@@ -73,6 +83,10 @@ fun PatientSignInScreen(
                     "Sign in"
                 },
             )
+        }
+
+        state.resetMessage?.let { message ->
+            Text(message)
         }
 
         state.errorMessage?.let { message ->

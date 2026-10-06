@@ -60,6 +60,20 @@ class FirebaseAuthSession @Inject constructor(
             .await()
     }
 
+    override suspend fun sendPasswordResetEmail(
+        email: String,
+    ) {
+        require(email.isNotBlank()) {
+            "Email is required."
+        }
+
+        firebaseAuth
+            .sendPasswordResetEmail(
+                email.trim(),
+            )
+            .await()
+    }
+
     override fun signOut() {
         firebaseAuth.signOut()
     }

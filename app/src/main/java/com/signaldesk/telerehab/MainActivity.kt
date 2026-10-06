@@ -106,6 +106,8 @@ class MainActivity : ComponentActivity() {
                                 patientSignInViewModel::updatePassword,
                             onSignIn =
                                 patientSignInViewModel::signIn,
+                            onForgotPassword =
+                                patientSignInViewModel::sendPasswordReset,
                             onBack =
                                 appEntryViewModel::openEntry,
                         )
@@ -200,6 +202,8 @@ class MainActivity : ComponentActivity() {
                                 therapistHomeViewModel::updateNewPatientDisplayName,
                             onAddPatient =
                                 therapistHomeViewModel::addPatient,
+                            onDismissGeneratedPatientCredentials =
+                                therapistHomeViewModel::dismissGeneratedPatientCredentials,
                             onCreateKneeFlexionAssignment =
                                 therapistHomeViewModel::createKneeFlexionAssignment,
                             onSignOut = {

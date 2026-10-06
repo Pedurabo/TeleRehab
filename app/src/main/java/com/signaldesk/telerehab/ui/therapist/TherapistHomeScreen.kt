@@ -48,6 +48,7 @@ fun TherapistHomeScreen(
     onNewPatientEmailChanged: (String) -> Unit,
     onNewPatientDisplayNameChanged: (String) -> Unit,
     onAddPatient: () -> Unit,
+    onDismissGeneratedPatientCredentials: () -> Unit,
     onCreateKneeFlexionAssignment: () -> Unit,
     onSignOut: () -> Unit,
 ) {
@@ -253,6 +254,15 @@ fun TherapistHomeScreen(
                                             "They will be required to create a new password on first sign in. " +
                                             "The temporary password is not stored by TeleRehab.",
                                 )
+
+                                OutlinedButton(
+                                    onClick =
+                                        onDismissGeneratedPatientCredentials,
+                                    modifier =
+                                        Modifier.fillMaxWidth(),
+                                ) {
+                                    Text("Dismiss credentials")
+                                }
                             }
                         }
                     }

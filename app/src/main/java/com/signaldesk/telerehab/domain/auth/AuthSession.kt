@@ -17,5 +17,11 @@ interface AuthSession {
         error("Password updates are not supported.")
     }
 
+    suspend fun sendPasswordResetEmail(
+        email: String,
+    ) {
+        error("Password reset email is not supported.")
+    }
+
     fun signOut()
 }

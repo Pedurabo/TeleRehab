@@ -431,6 +431,14 @@ class TherapistHomeViewModel @Inject constructor(
             )
     }
 
+    fun dismissGeneratedPatientCredentials() {
+        _uiState.value =
+            _uiState.value.copy(
+                generatedPatientCredentials = null,
+                addPatientMessage = null,
+            )
+    }
+
     fun clearSaveMessage() {
         _uiState.value =
             _uiState.value.copy(
