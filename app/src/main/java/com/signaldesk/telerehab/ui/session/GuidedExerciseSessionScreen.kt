@@ -43,6 +43,7 @@ import java.util.concurrent.Executors
 
 @Composable
 fun GuidedExerciseSessionScreen(
+    exerciseId: String,
     exerciseTitle: String,
     targetRepetitions: Int,
     sessionId: String,
@@ -95,6 +96,7 @@ fun GuidedExerciseSessionScreen(
     ) {
         if (hasCameraPermission) {
             CameraSessionContent(
+                exerciseId = exerciseId,
                 exerciseTitle = exerciseTitle,
                 targetRepetitions = targetRepetitions,
                 sessionId = sessionId,
@@ -118,6 +120,7 @@ fun GuidedExerciseSessionScreen(
 
 @Composable
 private fun CameraSessionContent(
+    exerciseId: String,
     exerciseTitle: String,
     targetRepetitions: Int,
     sessionId: String,
@@ -280,6 +283,7 @@ private fun CameraSessionContent(
             Text(
                 text =
                     sessionGuidance(
+                        exerciseId = exerciseId,
                         state = analysisState,
                     ),
                 color = Color.White,
@@ -290,7 +294,7 @@ private fun CameraSessionContent(
             analysisState.trackedKneeAngleDegrees?.let { angle ->
                 Text(
                     text =
-                        "Tracked knee angle: ${angle.toInt()}?",
+                        "Tracked knee angle: ${angle.toInt()} degrees",
                     color = Color.White,
                     style =
                         MaterialTheme.typography.bodyMedium,
@@ -323,7 +327,8 @@ private fun CameraSessionContent(
     }
 }
 
-private fun sessionGuidance(
+internal fun sessionGuidance(
+    exerciseId: String,
     state: GuidedSessionAnalysisState,
 ): String {
     val angle =
@@ -334,7 +339,7 @@ private fun sessionGuidance(
     }
 
     if (!state.trackingConfigured) {
-        return "Keep the leg visible and move slowly through the exercise."
+        return "Keep your leg visible and move slowly through the exercise."
     }
 
     val flexed =
@@ -343,39 +348,78 @@ private fun sessionGuidance(
     val extended =
         state.extendedAtOrAboveDegrees
 
-    return when (state.movementPhase) {
-        KneeMovementPhase.UNKNOWN -> {
-            if (
-                extended != null &&
-                angle < extended
-            ) {
-                "Straighten your knee to begin the repetition."
-            } else {
-                "Ready. Bend your knee slowly."
-            }
-        }
+    return when (exerciseId) {
+        "seated-knee-extension" ->
+            when (state.movementPhase) {
+                KneeMovementPhase.UNKNOWN -> {
+                    if (
+                        flexed != null &&
+                        angle > flexed
+                    ) {
+                        "Return to the bent starting position."
+                    } else {
+                        "Ready. Slowly straighten your knee."
+                    }
+                }
 
-        KneeMovementPhase.EXTENDED -> {
-            if (
-                flexed != null &&
-                angle > flexed
-            ) {
-                "Bend your knee a little more."
-            } else {
-                "Good bend. Now straighten your knee."
-            }
-        }
+                KneeMovementPhase.FLEXED -> {
+                    if (
+                        extended != null &&
+                        angle < extended
+                    ) {
+                        "Keep straightening your knee."
+                    } else {
+                        "Good extension. Return slowly to the bent position."
+                    }
+                }
 
-        KneeMovementPhase.FLEXED -> {
-            if (
-                extended != null &&
-                angle < extended
-            ) {
-                "Straighten your knee to complete the repetition."
-            } else {
-                "Repetition complete. Bend again when ready."
+                KneeMovementPhase.EXTENDED -> {
+                    if (
+                        flexed != null &&
+                        angle > flexed
+                    ) {
+                        "Bend your knee a little more to reset."
+                    } else {
+                        "Ready for the next extension."
+                    }
+                }
             }
-        }
+
+        else ->
+            when (state.movementPhase) {
+                KneeMovementPhase.UNKNOWN -> {
+                    if (
+                        extended != null &&
+                        angle < extended
+                    ) {
+                        "Straighten your knee to begin the repetition."
+                    } else {
+                        "Ready. Bend your knee slowly."
+                    }
+                }
+
+                KneeMovementPhase.EXTENDED -> {
+                    if (
+                        flexed != null &&
+                        angle > flexed
+                    ) {
+                        "Bend your knee a little more."
+                    } else {
+                        "Good bend. Now straighten your knee."
+                    }
+                }
+
+                KneeMovementPhase.FLEXED -> {
+                    if (
+                        extended != null &&
+                        angle < extended
+                    ) {
+                        "Straighten your knee to complete the repetition."
+                    } else {
+                        "Repetition complete. Bend again when ready."
+                    }
+                }
+            }
     }
 }
 

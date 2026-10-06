@@ -56,6 +56,8 @@ class DebugCameraVerificationActivity :
                 }
 
                 GuidedExerciseSessionScreen(
+                    exerciseId =
+                        "knee-flexion",
                     exerciseTitle =
                         "Knee Flexion and Extension",
                     targetRepetitions = 10,

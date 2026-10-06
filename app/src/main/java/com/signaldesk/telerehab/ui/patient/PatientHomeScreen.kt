@@ -78,6 +78,8 @@ fun PatientHomeScreen(
                         )
                     }
                     GuidedExerciseSessionScreen(
+                        exerciseId =
+                            state.selectedAssignment.exerciseId,
                         exerciseTitle =
                             state.selectedAssignment.title,
                         targetRepetitions =
