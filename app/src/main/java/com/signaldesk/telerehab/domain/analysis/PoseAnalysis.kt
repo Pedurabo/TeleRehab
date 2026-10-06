@@ -32,30 +32,3 @@ data class PoseObservation(
         require(imageHeight > 0)
     }
 }
-
-data class PoseFrame(
-    val width: Int,
-    val height: Int,
-    val rotationDegrees: Int,
-    val timestampNanos: Long,
-    val pixels: ByteArray,
-) {
-    init {
-        require(width > 0)
-        require(height > 0)
-
-        require(
-            rotationDegrees == 0 ||
-                rotationDegrees == 90 ||
-                rotationDegrees == 180 ||
-                rotationDegrees == 270,
-        )
-    }
-}
-
-interface PoseAnalysisEngine {
-
-    suspend fun analyze(
-        frame: PoseFrame,
-    ): PoseObservation
-}
