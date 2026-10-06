@@ -24,6 +24,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+data class AssignmentRecentPerformance(
+    val assignmentId: String,
+    val assignmentTitle: String,
+    val completedSessionCount: Int,
+    val latestRepetitions: Int?,
+    val repetitionTrend: Int?,
+    val latestKneeRangeWidthDegrees: Double?,
+    val kneeRangeTrendDegrees: Double?,
+)
+
 data class TherapistHomeUiState(
     val therapistId: String? = null,
     val patients: List<TherapistPatient> = emptyList(),
@@ -37,8 +47,7 @@ data class TherapistHomeUiState(
     val recentSessions: List<ExerciseSession> = emptyList(),
     val completedSessionCount: Int = 0,
     val assignmentWeeklyAdherence: List<AssignmentWeeklyAdherence> = emptyList(),
-    val latestCompletedRepetitions: Int? = null,
-    val repetitionTrend: Int? = null,
+    val assignmentRecentPerformance: List<AssignmentRecentPerformance> = emptyList(),
     val isLoading: Boolean = true,
     val isSavingAssignment: Boolean = false,
     val saveMessage: String? = null,
@@ -248,17 +257,11 @@ class TherapistHomeViewModel @Inject constructor(
                         )
                     }
 
-                val latestRepetitions =
-                    recentSessions
-                        .firstOrNull()
-                        ?.metrics
-                        ?.completedRepetitions
-
-                val previousRepetitions =
-                    recentSessions
-                        .getOrNull(1)
-                        ?.metrics
-                        ?.completedRepetitions
+                val assignmentRecentPerformance =
+                    buildAssignmentRecentPerformance(
+                        assignments = assignments,
+                        recentSessions = recentSessions,
+                    )
 
                 _uiState.value =
                     _uiState.value.copy(
@@ -268,16 +271,8 @@ class TherapistHomeViewModel @Inject constructor(
                         completedSessionCount = recentSessions.size,
                         assignmentWeeklyAdherence =
                             assignmentWeeklyAdherence,
-                        latestCompletedRepetitions = latestRepetitions,
-                        repetitionTrend =
-                            if (
-                                latestRepetitions != null &&
-                                previousRepetitions != null
-                            ) {
-                                latestRepetitions - previousRepetitions
-                            } else {
-                                null
-                            },
+                        assignmentRecentPerformance =
+                            assignmentRecentPerformance,
                         errorMessage = null,
                     )
             } catch (error: Throwable) {
@@ -495,8 +490,7 @@ class TherapistHomeViewModel @Inject constructor(
                 recentSessions = emptyList(),
                 completedSessionCount = 0,
                 assignmentWeeklyAdherence = emptyList(),
-                latestCompletedRepetitions = null,
-                repetitionTrend = null,
+                assignmentRecentPerformance = emptyList(),
                 saveMessage = null,
                 errorMessage = null,
             )
@@ -516,3 +510,94 @@ class TherapistHomeViewModel @Inject constructor(
                 saveMessage = null,
             )
     }}
+
+internal fun buildAssignmentRecentPerformance(
+    assignments: List<ExerciseAssignment>,
+    recentSessions: List<ExerciseSession>,
+): List<AssignmentRecentPerformance> {
+    val sessionsByAssignment =
+        recentSessions.groupBy {
+            it.assignmentId
+        }
+
+    return assignments.mapNotNull { assignment ->
+        val sessions =
+            sessionsByAssignment[
+                assignment.id
+            ].orEmpty()
+
+        if (sessions.isEmpty()) {
+            return@mapNotNull null
+        }
+
+        val latestRepetitions =
+            sessions
+                .getOrNull(0)
+                ?.metrics
+                ?.completedRepetitions
+
+        val previousRepetitions =
+            sessions
+                .getOrNull(1)
+                ?.metrics
+                ?.completedRepetitions
+
+        val validRangeWidths =
+            sessions.mapNotNull { session ->
+                val metrics =
+                    session.metrics
+                        ?: return@mapNotNull null
+
+                val minimum =
+                    metrics.minimumKneeAngleDegrees
+
+                val maximum =
+                    metrics.maximumKneeAngleDegrees
+
+                if (
+                    minimum != null &&
+                    maximum != null
+                ) {
+                    maximum - minimum
+                } else {
+                    null
+                }
+            }
+
+        val latestRange =
+            validRangeWidths.getOrNull(0)
+
+        val previousRange =
+            validRangeWidths.getOrNull(1)
+
+        AssignmentRecentPerformance(
+            assignmentId = assignment.id,
+            assignmentTitle = assignment.title,
+            completedSessionCount = sessions.size,
+            latestRepetitions = latestRepetitions,
+            repetitionTrend =
+                if (
+                    latestRepetitions != null &&
+                    previousRepetitions != null
+                ) {
+                    latestRepetitions -
+                        previousRepetitions
+                } else {
+                    null
+                },
+            latestKneeRangeWidthDegrees =
+                latestRange,
+            kneeRangeTrendDegrees =
+                if (
+                    latestRange != null &&
+                    previousRange != null
+                ) {
+                    latestRange -
+                        previousRange
+                } else {
+                    null
+                },
+        )
+    }
+}
+

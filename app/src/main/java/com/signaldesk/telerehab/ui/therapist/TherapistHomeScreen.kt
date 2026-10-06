@@ -462,37 +462,88 @@ fun TherapistHomeScreen(
                 }
 
                 if (
-                    state.latestCompletedRepetitions != null ||
-                    state.repetitionTrend != null
+                    state.assignmentRecentPerformance.isNotEmpty()
                 ) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement =
-                                Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text(
-                                text = "Recent performance",
-                                style = MaterialTheme.typography.titleMedium,
-                            )
+                    Text(
+                        text = "Recent performance",
+                        style =
+                            MaterialTheme.typography.titleMedium,
+                    )
 
-                            state.latestCompletedRepetitions?.let {
-                                Text(
-                                    "Latest completed session: $it repetitions",
-                                )
-                            }
+                    state.assignmentRecentPerformance
+                        .forEach { performance ->
+                            Card(
+                                modifier =
+                                    Modifier.fillMaxWidth(),
+                            ) {
+                                Column(
+                                    modifier =
+                                        Modifier.padding(16.dp),
+                                    verticalArrangement =
+                                        Arrangement.spacedBy(8.dp),
+                                ) {
+                                    Text(
+                                        text =
+                                            performance.assignmentTitle,
+                                        style =
+                                            MaterialTheme.typography.titleSmall,
+                                    )
 
-                            state.repetitionTrend?.let { trend ->
-                                Text(
-                                    "Change from previous session: ${
-                                        if (trend > 0) "+$trend" else trend
-                                    } repetitions",
-                                )
+                                    Text(
+                                        text =
+                                            "Completed sessions: ${performance.completedSessionCount}",
+                                    )
+
+                                    performance.latestRepetitions
+                                        ?.let { repetitions ->
+                                            Text(
+                                                text =
+                                                    "Latest completed session: $repetitions repetitions",
+                                            )
+                                        }
+
+                                    performance.repetitionTrend
+                                        ?.let { trend ->
+                                            Text(
+                                                text =
+                                                    "Repetitions vs previous: ${
+                                                        if (trend >= 0) {
+                                                            "+$trend"
+                                                        } else {
+                                                            trend
+                                                        }
+                                                    }",
+                                            )
+                                        }
+
+                                    performance.latestKneeRangeWidthDegrees
+                                        ?.let { range ->
+                                            Text(
+                                                text =
+                                                    "Latest knee range: %.1f degrees"
+                                                        .format(range),
+                                            )
+                                        }
+
+                                    performance.kneeRangeTrendDegrees
+                                        ?.let { trend ->
+                                            Text(
+                                                text =
+                                                    if (
+                                                        kotlin.math.abs(trend) < 0.05
+                                                    ) {
+                                                        "Range vs previous: no measurable change"
+                                                    } else {
+                                                        "Range vs previous: ${
+                                                            if (trend > 0) "+" else ""
+                                                        }%.1f degrees"
+                                                            .format(trend)
+                                                    },
+                                            )
+                                        }
+                                }
                             }
                         }
-                    }
                 }
 
                 Text(
