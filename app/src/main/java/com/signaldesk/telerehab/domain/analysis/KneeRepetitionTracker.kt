@@ -3,6 +3,7 @@ package com.signaldesk.telerehab.domain.analysis
 data class KneeRepetitionConfiguration(
     val flexedAtOrBelowDegrees: Double,
     val extendedAtOrAboveDegrees: Double,
+    val stableFramesRequired: Int = 3,
 ) {
     init {
         require(
@@ -16,6 +17,10 @@ data class KneeRepetitionConfiguration(
         require(
             flexedAtOrBelowDegrees <
                 extendedAtOrAboveDegrees,
+        )
+
+        require(
+            stableFramesRequired > 0,
         )
     }
 }
@@ -39,6 +44,12 @@ class KneeRepetitionTracker(
     private var state =
         KneeRepetitionState()
 
+    private var candidatePhase:
+        KneeMovementPhase? = null
+
+    private var candidateFrameCount:
+        Int = 0
+
     fun currentState():
         KneeRepetitionState =
         state
@@ -46,12 +57,18 @@ class KneeRepetitionTracker(
     fun reset() {
         state =
             KneeRepetitionState()
+
+        candidatePhase =
+            null
+
+        candidateFrameCount =
+            0
     }
 
     fun accept(
         measurement: KneeAngleMeasurement,
     ): KneeRepetitionState {
-        val nextPhase =
+        val observedPhase =
             when {
                 measurement.angleDegrees <=
                     configuration.flexedAtOrBelowDegrees ->
@@ -62,22 +79,63 @@ class KneeRepetitionTracker(
                     KneeMovementPhase.EXTENDED
 
                 else ->
-                    state.phase
+                    null
             }
+
+        if (
+            observedPhase == null ||
+            observedPhase == state.phase
+        ) {
+            candidatePhase =
+                null
+
+            candidateFrameCount =
+                0
+
+            return state
+        }
+
+        if (candidatePhase == observedPhase) {
+            candidateFrameCount += 1
+        } else {
+            candidatePhase =
+                observedPhase
+
+            candidateFrameCount =
+                1
+        }
+
+        if (
+            candidateFrameCount <
+            configuration.stableFramesRequired
+        ) {
+            return state
+        }
 
         val completedRepetition =
             state.phase ==
                 KneeMovementPhase.FLEXED &&
-                nextPhase ==
+                observedPhase ==
                 KneeMovementPhase.EXTENDED
 
         state =
             KneeRepetitionState(
                 repetitions =
                     state.repetitions +
-                        if (completedRepetition) 1 else 0,
-                phase = nextPhase,
+                        if (completedRepetition) {
+                            1
+                        } else {
+                            0
+                        },
+                phase =
+                    observedPhase,
             )
+
+        candidatePhase =
+            null
+
+        candidateFrameCount =
+            0
 
         return state
     }

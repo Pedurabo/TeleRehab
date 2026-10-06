@@ -12,24 +12,31 @@ class KneeRepetitionTrackerTest {
         )
 
     @Test
-    fun countsFlexedToExtendedTransitionAsOneRepetition() {
+    fun countsStableFlexedToExtendedTransitionAsOneRepetition() {
         val tracker =
             KneeRepetitionTracker(
                 configuration = configuration,
             )
 
-        tracker.accept(
-            measurement(
-                angle = 80.0,
-            ),
-        )
-
-        val result =
+        repeat(3) {
             tracker.accept(
                 measurement(
-                    angle = 170.0,
+                    angle = 80.0,
                 ),
             )
+        }
+
+        var result =
+            tracker.currentState()
+
+        repeat(3) {
+            result =
+                tracker.accept(
+                    measurement(
+                        angle = 170.0,
+                    ),
+                )
+        }
 
         assertEquals(
             1,
@@ -43,7 +50,40 @@ class KneeRepetitionTrackerTest {
     }
 
     @Test
-    fun doesNotDoubleCountRepeatedExtendedFrames() {
+    fun singleNoisyThresholdFrameDoesNotChangePhase() {
+        val tracker =
+            KneeRepetitionTracker(
+                configuration = configuration,
+            )
+
+        repeat(3) {
+            tracker.accept(
+                measurement(
+                    angle = 170.0,
+                ),
+            )
+        }
+
+        val noisyFrame =
+            tracker.accept(
+                measurement(
+                    angle = 80.0,
+                ),
+            )
+
+        assertEquals(
+            KneeMovementPhase.EXTENDED,
+            noisyFrame.phase,
+        )
+
+        assertEquals(
+            0,
+            noisyFrame.repetitions,
+        )
+    }
+
+    @Test
+    fun interruptedCandidateDoesNotBecomeStablePhase() {
         val tracker =
             KneeRepetitionTracker(
                 configuration = configuration,
@@ -57,9 +97,45 @@ class KneeRepetitionTrackerTest {
 
         tracker.accept(
             measurement(
-                angle = 170.0,
+                angle = 82.0,
             ),
         )
+
+        val result =
+            tracker.accept(
+                measurement(
+                    angle = 120.0,
+                ),
+            )
+
+        assertEquals(
+            KneeMovementPhase.UNKNOWN,
+            result.phase,
+        )
+    }
+
+    @Test
+    fun doesNotDoubleCountRepeatedExtendedFrames() {
+        val tracker =
+            KneeRepetitionTracker(
+                configuration = configuration,
+            )
+
+        repeat(3) {
+            tracker.accept(
+                measurement(
+                    angle = 80.0,
+                ),
+            )
+        }
+
+        repeat(3) {
+            tracker.accept(
+                measurement(
+                    angle = 170.0,
+                ),
+            )
+        }
 
         val result =
             tracker.accept(
@@ -100,13 +176,14 @@ class KneeRepetitionTrackerTest {
     }
 
     @Test
-    fun thresholdConfigurationIsExternal() {
+    fun thresholdConfigurationRemainsExternal() {
         val tracker =
             KneeRepetitionTracker(
                 configuration =
                     KneeRepetitionConfiguration(
                         flexedAtOrBelowDegrees = 100.0,
                         extendedAtOrAboveDegrees = 150.0,
+                        stableFramesRequired = 1,
                     ),
             )
 
@@ -125,6 +202,45 @@ class KneeRepetitionTrackerTest {
 
         assertEquals(
             1,
+            result.repetitions,
+        )
+    }
+
+    @Test
+    fun resetClearsPendingMovementEvidence() {
+        val tracker =
+            KneeRepetitionTracker(
+                configuration = configuration,
+            )
+
+        tracker.accept(
+            measurement(
+                angle = 80.0,
+            ),
+        )
+
+        tracker.accept(
+            measurement(
+                angle = 80.0,
+            ),
+        )
+
+        tracker.reset()
+
+        val result =
+            tracker.accept(
+                measurement(
+                    angle = 80.0,
+                ),
+            )
+
+        assertEquals(
+            KneeMovementPhase.UNKNOWN,
+            result.phase,
+        )
+
+        assertEquals(
+            0,
             result.repetitions,
         )
     }
