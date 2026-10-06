@@ -16,10 +16,22 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
+data class ExerciseProgressSummary(
+    val assignmentId: String,
+    val exerciseTitle: String,
+    val completedSessionCount: Int,
+    val totalRepetitions: Int,
+    val latestRepetitions: Int?,
+    val repetitionChangeFromPrevious: Int?,
+    val latestKneeRangeWidthDegrees: Double?,
+    val kneeRangeChangeFromPreviousDegrees: Double?,
+)
+
 data class PatientHomeUiState(
     val patientId: String? = null,
     val assignments: List<ExerciseAssignment> = emptyList(),
     val recentSessions: List<ExerciseSession> = emptyList(),
+    val exerciseProgress: List<ExerciseProgressSummary> = emptyList(),
     val recentCompletedSessionCount: Int = 0,
     val recentTotalRepetitions: Int = 0,
     val latestCompletedRepetitions: Int? = null,
@@ -77,11 +89,18 @@ class PatientHomeViewModel @Inject constructor(
                 val progress =
                     recentSessions.toProgressSummary()
 
+                val exerciseProgress =
+                    buildExerciseProgressSummaries(
+                        assignments = cachedAssignments,
+                        recentSessions = recentSessions,
+                    )
+
                 _uiState.value =
                     _uiState.value.copy(
                         patientId = patientId,
                         assignments = cachedAssignments,
                         recentSessions = recentSessions,
+                        exerciseProgress = exerciseProgress,
                         recentCompletedSessionCount =
                             progress.completedSessionCount,
                         recentTotalRepetitions =
@@ -235,11 +254,19 @@ class PatientHomeViewModel @Inject constructor(
                 val progress =
                     recentSessions.toProgressSummary()
 
+                val exerciseProgress =
+                    buildExerciseProgressSummaries(
+                        assignments =
+                            _uiState.value.assignments,
+                        recentSessions = recentSessions,
+                    )
+
                 _uiState.value =
                     _uiState.value.copy(
                         selectedAssignment = null,
                         startedSessionId = null,
                         recentSessions = recentSessions,
+                        exerciseProgress = exerciseProgress,
                         recentCompletedSessionCount =
                             progress.completedSessionCount,
                         recentTotalRepetitions =
@@ -389,5 +416,107 @@ class PatientHomeViewModel @Inject constructor(
                 )
         }
     }
+}
+
+internal fun buildExerciseProgressSummaries(
+    assignments: List<ExerciseAssignment>,
+    recentSessions: List<ExerciseSession>,
+): List<ExerciseProgressSummary> {
+    val assignmentsById =
+        assignments.associateBy {
+            it.id
+        }
+
+    return recentSessions
+        .groupBy {
+            it.assignmentId
+        }
+        .mapNotNull { (assignmentId, sessions) ->
+            val assignment =
+                assignmentsById[assignmentId]
+                    ?: return@mapNotNull null
+
+            val latestRepetitions =
+                sessions
+                    .getOrNull(0)
+                    ?.metrics
+                    ?.completedRepetitions
+
+            val previousRepetitions =
+                sessions
+                    .getOrNull(1)
+                    ?.metrics
+                    ?.completedRepetitions
+
+            val validRangeWidths =
+                sessions.mapNotNull { session ->
+                    val metrics =
+                        session.metrics
+                            ?: return@mapNotNull null
+
+                    val minimum =
+                        metrics.minimumKneeAngleDegrees
+
+                    val maximum =
+                        metrics.maximumKneeAngleDegrees
+
+                    if (
+                        minimum != null &&
+                        maximum != null
+                    ) {
+                        maximum - minimum
+                    } else {
+                        null
+                    }
+                }
+
+            val latestRangeWidth =
+                validRangeWidths.getOrNull(0)
+
+            val previousRangeWidth =
+                validRangeWidths.getOrNull(1)
+
+            ExerciseProgressSummary(
+                assignmentId = assignmentId,
+                exerciseTitle = assignment.title,
+                completedSessionCount =
+                    sessions.size,
+                totalRepetitions =
+                    sessions.sumOf {
+                        it.metrics
+                            ?.completedRepetitions
+                            ?: 0
+                    },
+                latestRepetitions =
+                    latestRepetitions,
+                repetitionChangeFromPrevious =
+                    if (
+                        latestRepetitions != null &&
+                        previousRepetitions != null
+                    ) {
+                        latestRepetitions -
+                            previousRepetitions
+                    } else {
+                        null
+                    },
+                latestKneeRangeWidthDegrees =
+                    latestRangeWidth,
+                kneeRangeChangeFromPreviousDegrees =
+                    if (
+                        latestRangeWidth != null &&
+                        previousRangeWidth != null
+                    ) {
+                        latestRangeWidth -
+                            previousRangeWidth
+                    } else {
+                        null
+                    },
+            )
+        }
+        .sortedBy { summary ->
+            assignments.indexOfFirst {
+                it.id == summary.assignmentId
+            }
+        }
 }
 

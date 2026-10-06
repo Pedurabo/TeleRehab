@@ -313,7 +313,7 @@ private fun AssignmentListContent(
             modifier = Modifier.height(32.dp),
         )
 
-        if (state.recentCompletedSessionCount > 0) {
+        if (state.exerciseProgress.isNotEmpty()) {
             Text(
                 text = "Progress",
                 style =
@@ -324,72 +324,14 @@ private fun AssignmentListContent(
                 modifier = Modifier.height(12.dp),
             )
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
+            Column(
+                verticalArrangement =
+                    Arrangement.spacedBy(12.dp),
             ) {
-                Column(
-                    modifier =
-                        Modifier.padding(20.dp),
-                    verticalArrangement =
-                        Arrangement.spacedBy(10.dp),
-                ) {
-                    Text(
-                        text =
-                            "Completed sessions: ${state.recentCompletedSessionCount}",
-                        style =
-                            MaterialTheme.typography.bodyLarge,
+                state.exerciseProgress.forEach { progress ->
+                    ExerciseProgressCard(
+                        progress = progress,
                     )
-
-                    Text(
-                        text =
-                            "Recent repetitions: ${state.recentTotalRepetitions}",
-                    )
-
-                    state.latestCompletedRepetitions?.let {
-                        Text(
-                            text =
-                                "Latest repetitions: $it",
-                        )
-                    }
-
-                    state.repetitionChangeFromPrevious
-                        ?.let { change ->
-                            Text(
-                                text =
-                                    "Repetitions vs previous: ${
-                                        if (change >= 0) {
-                                            "+$change"
-                                        } else {
-                                            change
-                                        }
-                                    }",
-                            )
-                        }
-
-                    state.latestKneeRangeWidthDegrees
-                        ?.let { width ->
-                            Text(
-                                text =
-                                    "Latest knee range: %.1f degrees"
-                                        .format(width),
-                            )
-                        }
-
-                    state.kneeRangeChangeFromPreviousDegrees
-                        ?.let { change ->
-                            Text(
-                                text =
-                                    if (
-                                        kotlin.math.abs(change) < 0.05
-                                    ) {
-                                        "Range vs previous: no measurable change"
-                                    } else {
-                                        "Range vs previous: ${
-                                            if (change > 0) "+" else ""
-                                        }%.1f degrees".format(change)
-                                    },
-                            )
-                        }
                 }
             }
 
@@ -425,6 +367,83 @@ private fun AssignmentListContent(
             )
         }
 
+    }
+}
+
+@Composable
+private fun ExerciseProgressCard(
+    progress: ExerciseProgressSummary,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement =
+                Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                text = progress.exerciseTitle,
+                style =
+                    MaterialTheme.typography.titleMedium,
+            )
+
+            Text(
+                text =
+                    "Completed sessions: ${progress.completedSessionCount}",
+            )
+
+            Text(
+                text =
+                    "Recent repetitions: ${progress.totalRepetitions}",
+            )
+
+            progress.latestRepetitions?.let {
+                Text(
+                    text =
+                        "Latest repetitions: $it",
+                )
+            }
+
+            progress.repetitionChangeFromPrevious
+                ?.let { change ->
+                    Text(
+                        text =
+                            "Repetitions vs previous: ${
+                                if (change >= 0) {
+                                    "+$change"
+                                } else {
+                                    change
+                                }
+                            }",
+                    )
+                }
+
+            progress.latestKneeRangeWidthDegrees
+                ?.let { width ->
+                    Text(
+                        text =
+                            "Latest knee range: %.1f degrees"
+                                .format(width),
+                    )
+                }
+
+            progress.kneeRangeChangeFromPreviousDegrees
+                ?.let { change ->
+                    Text(
+                        text =
+                            if (
+                                kotlin.math.abs(change) < 0.05
+                            ) {
+                                "Range vs previous: no measurable change"
+                            } else {
+                                "Range vs previous: ${
+                                    if (change > 0) "+" else ""
+                                }%.1f degrees".format(change)
+                            },
+                    )
+                }
+        }
     }
 }
 
