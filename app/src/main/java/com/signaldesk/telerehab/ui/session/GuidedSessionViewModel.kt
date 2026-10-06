@@ -58,6 +58,9 @@ class GuidedSessionViewModel @Inject constructor(
     private val sideReacquisitionFrameThreshold:
         Int = 5
 
+    private val minimumPoseConfidence:
+        Float = 0.25f
+
     fun configureTracking(
         targetRepetitions: Int,
         flexedAtOrBelowDegrees: Double?,
@@ -121,14 +124,16 @@ class GuidedSessionViewModel @Inject constructor(
             calculateKneeAngle.invoke(
                 observation = observation,
                 side = KneeSide.LEFT,
-                minimumConfidence = 0.0f,
+                minimumConfidence =
+                    minimumPoseConfidence,
             )
 
         val right =
             calculateKneeAngle.invoke(
                 observation = observation,
                 side = KneeSide.RIGHT,
-                minimumConfidence = 0.0f,
+                minimumConfidence =
+                    minimumPoseConfidence,
             )
 
         val selectedMeasurement =

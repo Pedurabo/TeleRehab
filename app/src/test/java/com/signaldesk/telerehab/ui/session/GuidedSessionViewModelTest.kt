@@ -153,6 +153,105 @@ class GuidedSessionViewModelTest {
         )
     }
 
+    @Test
+    fun lowConfidenceLegIsIgnored() {
+        val viewModel =
+            newViewModel()
+
+        viewModel.configureTracking(
+            targetRepetitions = 10,
+            flexedAtOrBelowDegrees = 90.0,
+            extendedAtOrAboveDegrees = 160.0,
+        )
+
+        viewModel.submitObservation(
+            observationWithBothLegs(
+                leftConfidence = 0.20f,
+                rightConfidence = 0.10f,
+            ),
+        )
+
+        assertNull(
+            viewModel.analysisState.value
+                .trackedKneeAngleDegrees,
+        )
+
+        assertNull(
+            viewModel.analysisState.value
+                .leftKneeAngleDegrees,
+        )
+
+        assertNull(
+            viewModel.analysisState.value
+                .rightKneeAngleDegrees,
+        )
+    }
+
+    @Test
+    fun confidenceAtOrAboveThresholdCanBeTracked() {
+        val viewModel =
+            newViewModel()
+
+        viewModel.configureTracking(
+            targetRepetitions = 10,
+            flexedAtOrBelowDegrees = 90.0,
+            extendedAtOrAboveDegrees = 160.0,
+        )
+
+        viewModel.submitObservation(
+            observationWithBothLegs(
+                leftConfidence = 0.25f,
+                rightConfidence = 0.20f,
+            ),
+        )
+
+        assertEquals(
+            180.0,
+            requireNotNull(
+                viewModel.analysisState.value
+                    .trackedKneeAngleDegrees,
+            ),
+            0.01,
+        )
+    }
+
+    @Test
+    fun lowConfidenceTrackedLegContributesToReacquisitionLoss() {
+        val viewModel =
+            newViewModel()
+
+        viewModel.configureTracking(
+            targetRepetitions = 10,
+            flexedAtOrBelowDegrees = 90.0,
+            extendedAtOrAboveDegrees = 160.0,
+        )
+
+        viewModel.submitObservation(
+            observationWithBothLegs(
+                leftConfidence = 0.9f,
+                rightConfidence = 0.8f,
+            ),
+        )
+
+        repeat(5) {
+            viewModel.submitObservation(
+                observationWithBothLegs(
+                    leftConfidence = 0.10f,
+                    rightConfidence = 0.90f,
+                ),
+            )
+        }
+
+        assertEquals(
+            90.0,
+            requireNotNull(
+                viewModel.analysisState.value
+                    .trackedKneeAngleDegrees,
+            ),
+            0.01,
+        )
+    }
+
     private fun newViewModel(): GuidedSessionViewModel =
         GuidedSessionViewModel(
             calculateKneeAngle =
