@@ -257,6 +257,7 @@ try {
       linkedPatientProfilePath,
       {
         role: "PATIENT",
+        mustChangePassword: true,
       },
     ),
   );
@@ -267,6 +268,7 @@ try {
       unlinkedPatientProfilePath,
       {
         role: "PATIENT",
+        mustChangePassword: true,
       },
     ),
   );
@@ -277,6 +279,7 @@ try {
       nonTherapistProfilePath,
       {
         role: "PATIENT",
+        mustChangePassword: true,
       },
     ),
   );
@@ -291,6 +294,7 @@ try {
       ),
       {
         role: "THERAPIST",
+        mustChangePassword: true,
       },
     ),
   );
@@ -322,12 +326,73 @@ try {
     ),
     {
       role: "PATIENT",
+      mustChangePassword: true,
     },
   );
 
   console.log("18. Therapist can provision linked patient atomically");
   await assertSucceeds(
     provisioningBatch.commit(),
+  );
+
+  const batchPatientDb =
+    testEnv.authenticatedContext(
+      batchPatientUid,
+    ).firestore();
+
+  const batchPatientOwnProfilePath =
+    doc(
+      batchPatientDb,
+      "users",
+      batchPatientUid,
+    );
+
+  console.log("19. Patient can mark temporary password as changed");
+  await assertSucceeds(
+    setDoc(
+      batchPatientOwnProfilePath,
+      {
+        role: "PATIENT",
+        mustChangePassword: false,
+      },
+    ),
+  );
+
+  console.log("20. Patient cannot change role while clearing password flag");
+  await assertFails(
+    setDoc(
+      batchPatientOwnProfilePath,
+      {
+        role: "THERAPIST",
+        mustChangePassword: false,
+      },
+    ),
+  );
+
+  console.log("21. Patient cannot set password-change flag back to true");
+  await assertFails(
+    setDoc(
+      batchPatientOwnProfilePath,
+      {
+        role: "PATIENT",
+        mustChangePassword: true,
+      },
+    ),
+  );
+
+  console.log("22. Different user cannot clear patient password flag");
+  await assertFails(
+    setDoc(
+      doc(
+        otherDb,
+        "users",
+        batchPatientUid,
+      ),
+      {
+        role: "PATIENT",
+        mustChangePassword: false,
+      },
+    ),
   );
 
   console.log("");

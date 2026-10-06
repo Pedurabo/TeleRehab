@@ -1,4 +1,4 @@
-﻿package com.signaldesk.telerehab.data.identity
+package com.signaldesk.telerehab.data.identity
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.signaldesk.telerehab.domain.identity.UserProfile
@@ -34,6 +34,23 @@ class FirestoreUserProfileRepository @Inject constructor(
         return UserProfile(
             id = userId,
             role = UserRole.valueOf(role),
+            mustChangePassword =
+                document.getBoolean("mustChangePassword")
+                    ?: false,
         )
+    }
+
+    override suspend fun markPasswordChanged(
+        userId: String,
+    ) {
+        firestore
+            .collection("users")
+            .document(userId)
+            .update(
+                mapOf(
+                    "mustChangePassword" to false,
+                ),
+            )
+            .await()
     }
 }

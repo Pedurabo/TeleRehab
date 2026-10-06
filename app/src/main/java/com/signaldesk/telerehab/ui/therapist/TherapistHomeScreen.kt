@@ -23,6 +23,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.signaldesk.telerehab.domain.assignment.ExerciseAssignment
@@ -59,6 +61,9 @@ fun TherapistHomeScreen(
     var selectedSessionId by remember {
         mutableStateOf<String?>(null)
     }
+
+    val clipboardManager =
+        LocalClipboardManager.current
 
     Column(
         modifier =
@@ -152,6 +157,18 @@ fun TherapistHomeScreen(
 
 
                     state.generatedPatientCredentials?.let { credentials ->
+                        var credentialsCopied by
+                            remember(credentials) {
+                                mutableStateOf(false)
+                            }
+
+                        LaunchedEffect(credentialsCopied) {
+                            if (credentialsCopied) {
+                                delay(2500)
+                                credentialsCopied = false
+                            }
+                        }
+
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                         ) {
@@ -175,9 +192,66 @@ fun TherapistHomeScreen(
                                         "Temporary password: ${credentials.temporaryPassword}",
                                 )
 
+                                Button(
+                                    onClick = {
+                                        clipboardManager.setText(
+                                            AnnotatedString(
+                                                credentials.email,
+                                            ),
+                                        )
+                                        credentialsCopied = true
+                                    },
+                                    modifier =
+                                        Modifier.fillMaxWidth(),
+                                ) {
+                                    Text("Copy email")
+                                }
+
+                                Button(
+                                    onClick = {
+                                        clipboardManager.setText(
+                                            AnnotatedString(
+                                                credentials.temporaryPassword,
+                                            ),
+                                        )
+                                        credentialsCopied = true
+                                    },
+                                    modifier =
+                                        Modifier.fillMaxWidth(),
+                                ) {
+                                    Text("Copy password")
+                                }
+
+                                OutlinedButton(
+                                    onClick = {
+                                        clipboardManager.setText(
+                                            AnnotatedString(
+                                                "TeleRehab patient credentials\n" +
+                                                    "Email: ${credentials.email}\n" +
+                                                    "Temporary password: ${credentials.temporaryPassword}",
+                                            ),
+                                        )
+                                        credentialsCopied = true
+                                    },
+                                    modifier =
+                                        Modifier.fillMaxWidth(),
+                                ) {
+                                    Text("Copy all")
+                                }
+
+                                if (credentialsCopied) {
+                                    Text(
+                                        text = "Copied to clipboard",
+                                        color =
+                                            MaterialTheme.colorScheme.primary,
+                                    )
+                                }
+
                                 Text(
                                     text =
-                                        "Share these credentials with the patient. The password is not stored by TeleRehab.",
+                                        "Share these one-time credentials with the patient. " +
+                                            "They will be required to create a new password on first sign in. " +
+                                            "The temporary password is not stored by TeleRehab.",
                                 )
                             }
                         }

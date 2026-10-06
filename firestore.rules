@@ -14,11 +14,25 @@ service cloud.firestore {
           /databases/$(database)/documents/therapists/$(request.auth.uid)/patients/$(userId)
         )
         && request.resource.data.keys().hasOnly([
-          'role'
+          'role',
+          'mustChangePassword'
         ])
-        && request.resource.data.role == 'PATIENT';
+        && request.resource.data.role == 'PATIENT'
+        && request.resource.data.mustChangePassword == true;
 
-      allow update, delete:
+      allow update:
+        if request.auth != null
+        && request.auth.uid == userId
+        && resource.data.role == 'PATIENT'
+        && resource.data.mustChangePassword == true
+        && request.resource.data.keys().hasOnly([
+          'role',
+          'mustChangePassword'
+        ])
+        && request.resource.data.role == 'PATIENT'
+        && request.resource.data.mustChangePassword == false;
+
+      allow delete:
         if false;
     }
 

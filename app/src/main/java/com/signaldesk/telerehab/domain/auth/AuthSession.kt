@@ -1,4 +1,4 @@
-﻿package com.signaldesk.telerehab.domain.auth
+package com.signaldesk.telerehab.domain.auth
 
 interface AuthSession {
 
@@ -10,6 +10,12 @@ interface AuthSession {
         email: String,
         password: String,
     ): String
+
+    suspend fun updatePassword(
+        newPassword: String,
+    ) {
+        error("Password updates are not supported.")
+    }
 
     fun signOut()
 }

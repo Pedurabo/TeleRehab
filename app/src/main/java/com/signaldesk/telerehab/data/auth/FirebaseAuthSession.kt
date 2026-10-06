@@ -1,4 +1,4 @@
-﻿package com.signaldesk.telerehab.data.auth
+package com.signaldesk.telerehab.data.auth
 
 import com.google.firebase.auth.FirebaseAuth
 import com.signaldesk.telerehab.domain.auth.AuthSession
@@ -41,6 +41,23 @@ class FirebaseAuthSession @Inject constructor(
         return requireNotNull(result.user?.uid) {
             "Firebase sign-in completed without a user ID."
         }
+    }
+
+    override suspend fun updatePassword(
+        newPassword: String,
+    ) {
+        require(newPassword.length >= 8) {
+            "Password must contain at least 8 characters."
+        }
+
+        val user =
+            requireNotNull(firebaseAuth.currentUser) {
+                "No patient is currently signed in."
+            }
+
+        user
+            .updatePassword(newPassword)
+            .await()
     }
 
     override fun signOut() {

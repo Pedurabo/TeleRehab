@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 enum class AppDestination {
     ENTRY,
     PATIENT_SIGN_IN,
+    PATIENT_CHANGE_PASSWORD,
     PATIENT,
     THERAPIST_SIGN_IN,
     THERAPIST,
@@ -57,7 +58,11 @@ class AppEntryViewModel @Inject constructor(
                 val destination =
                     when (profile?.role) {
                         UserRole.PATIENT ->
-                            AppDestination.PATIENT
+                            if (profile.mustChangePassword) {
+                                AppDestination.PATIENT_CHANGE_PASSWORD
+                            } else {
+                                AppDestination.PATIENT
+                            }
 
                         UserRole.THERAPIST ->
                             AppDestination.THERAPIST
@@ -99,7 +104,22 @@ class AppEntryViewModel @Inject constructor(
             )
     }
 
-    fun patientSignedIn() {
+    fun patientSignedIn(
+        mustChangePassword: Boolean = false,
+    ) {
+        _uiState.value =
+            _uiState.value.copy(
+                destination =
+                    if (mustChangePassword) {
+                        AppDestination.PATIENT_CHANGE_PASSWORD
+                    } else {
+                        AppDestination.PATIENT
+                    },
+                errorMessage = null,
+            )
+    }
+
+    fun patientPasswordChanged() {
         _uiState.value =
             _uiState.value.copy(
                 destination = AppDestination.PATIENT,

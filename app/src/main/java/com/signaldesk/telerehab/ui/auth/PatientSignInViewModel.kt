@@ -3,6 +3,7 @@ package com.signaldesk.telerehab.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.signaldesk.telerehab.domain.auth.SignInPatient
+import com.signaldesk.telerehab.domain.identity.UserProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,12 +15,14 @@ data class PatientSignInUiState(
     val password: String = "",
     val isWorking: Boolean = false,
     val signedInUserId: String? = null,
+    val mustChangePasswordRequired: Boolean = false,
     val errorMessage: String? = null,
 )
 
 @HiltViewModel
 class PatientSignInViewModel @Inject constructor(
     private val signInPatient: SignInPatient,
+    private val userProfileRepository: UserProfileRepository,
 ) : ViewModel() {
 
     private val _uiState =
@@ -85,10 +88,17 @@ class PatientSignInViewModel @Inject constructor(
                 val userId =
                     action(state)
 
+                val profile =
+                    userProfileRepository.findById(
+                        userId = userId,
+                    )
+
                 _uiState.value =
                     _uiState.value.copy(
                         isWorking = false,
                         signedInUserId = userId,
+                        mustChangePasswordRequired =
+                            profile?.mustChangePassword == true,
                     )
             } catch (error: Throwable) {
                 _uiState.value =

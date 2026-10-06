@@ -13,6 +13,8 @@ import androidx.compose.runtime.getValue
 import com.signaldesk.telerehab.ui.AppDestination
 import com.signaldesk.telerehab.ui.AppEntryScreen
 import com.signaldesk.telerehab.ui.AppEntryViewModel
+import com.signaldesk.telerehab.ui.auth.PatientChangePasswordScreen
+import com.signaldesk.telerehab.ui.auth.PatientChangePasswordViewModel
 import com.signaldesk.telerehab.ui.auth.PatientSignInScreen
 import com.signaldesk.telerehab.ui.auth.PatientSignInViewModel
 import com.signaldesk.telerehab.ui.auth.TherapistSignInScreen
@@ -36,6 +38,9 @@ class MainActivity : ComponentActivity() {
 
     private val patientSignInViewModel:
         PatientSignInViewModel by viewModels()
+
+    private val patientChangePasswordViewModel:
+        PatientChangePasswordViewModel by viewModels()
 
     private val therapistSignInViewModel:
         TherapistSignInViewModel by viewModels()
@@ -108,7 +113,38 @@ class MainActivity : ComponentActivity() {
                         if (
                             patientSignInState.signedInUserId != null
                         ) {
-                            appEntryViewModel.patientSignedIn()
+                            appEntryViewModel.patientSignedIn(
+                                mustChangePassword =
+                                    patientSignInState
+                                        .mustChangePasswordRequired,
+                            )
+                        }
+                    }
+
+                    appEntryState.destination ==
+                        AppDestination.PATIENT_CHANGE_PASSWORD -> {
+                        val passwordState by
+                            patientChangePasswordViewModel
+                                .uiState
+                                .collectAsState()
+
+                        PatientChangePasswordScreen(
+                            state = passwordState,
+                            onNewPasswordChanged =
+                                patientChangePasswordViewModel::updateNewPassword,
+                            onConfirmPasswordChanged =
+                                patientChangePasswordViewModel::updateConfirmPassword,
+                            onChangePassword =
+                                patientChangePasswordViewModel::changePassword,
+                            onSignOut = {
+                                patientChangePasswordViewModel.reset()
+                                patientSignInViewModel.reset()
+                                appEntryViewModel.signOut()
+                            },
+                        )
+
+                        if (passwordState.completed) {
+                            appEntryViewModel.patientPasswordChanged()
                         }
                     }
 

@@ -108,6 +108,7 @@ class FirestoreTherapistPatientRepository @Inject constructor(
                     profile,
                     mapOf(
                         "role" to "PATIENT",
+                        "mustChangePassword" to true,
                     ),
                 )
                 .commit()
