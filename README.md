@@ -1,89 +1,161 @@
 # TeleRehab
 
-TeleRehab is a native Android tele-rehabilitation application for structured patient exercise programs, therapist-managed assignments, guided camera sessions, progress tracking, and reliable local-first data handling.
+TeleRehab is a native Android tele-rehabilitation application for therapist-managed rehabilitation programs, guided patient exercise sessions, progress monitoring, and reliable local-first session synchronization.
 
-The project is being built as a production-oriented Android portfolio project, with an emphasis on clean architecture, offline capability, secure role-based workflows, deterministic synchronization, and camera-based movement analysis.
+The project is built as a production-oriented Android portfolio application with an emphasis on clean architecture, offline resilience, role-based workflows, deterministic synchronization, and camera-assisted movement analysis.
 
 ## Current status
 
-TeleRehab now has a working end-to-end patient/therapist flow.
+TeleRehab has a working end-to-end MVP with patient and therapist workflows validated on a physical Android device.
 
 ### Therapist workflow
 
 - Email/password therapist authentication
-- Therapist dashboard with sign out
+- Therapist dashboard and sign out
 - Therapist-managed patient provisioning
-- Stable Firebase Authentication accounts for patients
-- One-time generated temporary patient credentials
+- Firebase Authentication accounts for patients
+- Generated temporary patient credentials
 - Therapist-to-patient relationships stored in Firestore
-- Patient selection and assignment management
-- Knee Flexion assignment creation
-- Weekly adherence targets and therapist-facing progress summaries
-- Session drill-down and recent patient session history
+- Patient selection
+- Exercise assignment creation and management
+- Weekly adherence targets
+- Recent patient session history
+- Repetition-history visualization
+- Knee-range progress visualization
+- Per-assignment performance summaries
+- Patient-scoped session and progress loading
 
 ### Patient workflow
 
-- Stable email/password patient authentication
+- Email/password patient authentication
 - Patient sign out and role switching
-- Assigned exercise dashboard
-- Knee Flexion rehabilitation plan
-- Session targets for repetitions and weekly frequency
-- Guided exercise sessions
+- Assigned-exercise dashboard
+- Guided rehabilitation sessions
 - Camera-based pose analysis
-- Rep counting and flexion/extension threshold tracking
-- Recent session history and progress comparison
-- Offline-first assignment/session persistence
-- Manual refresh and cloud synchronization
+- Repetition tracking
+- Knee-angle range tracking
+- Recent session history
+- Exercise-specific progress summaries
+- Offline-first session persistence
+- Background cloud synchronization
+- Safe session completion
+- Explicit interruption when leaving a guided session
+- Interrupted-session recovery after app/process restart
+- Protection against concurrent active sessions
 
-## Current rehabilitation slice
+## Rehabilitation exercise
 
-The first supported exercise is **Knee Flexion / Extension**.
+The current guided rehabilitation exercise is **Seated Knee Extension**.
 
-A therapist can assign a target such as:
+The standard assignment currently uses:
 
 - 10 repetitions per session
 - 3 sessions per week
-- Flexion threshold at or below 90 degrees
-- Extension threshold at or above 160 degrees
+- Flexed threshold at or below 100°
+- Extended threshold at or above 160°
 
-The patient can then perform a guided camera session while TeleRehab derives movement metrics locally. Raw video is not uploaded or stored by default.
+During a guided session, TeleRehab derives movement metrics locally from camera pose landmarks.
+
+Raw rehabilitation video is not uploaded or stored by default.
+
+## Session lifecycle
+
+Exercise sessions are modeled explicitly as:
+
+- `IN_PROGRESS`
+- `COMPLETED`
+- `INTERRUPTED`
+- `CANCELLED`
+
+Session lifecycle handling includes:
+
+- prevention of concurrent patient sessions
+- guarded completion and interruption transitions
+- interruption on explicit guided-session exit
+- interruption before patient sign out
+- recovery of stale in-progress sessions after restart
+- protection against finish/back race conditions
+
+This keeps locally persisted session state consistent even when the normal happy path is interrupted.
+
+## Synchronization
+
+TeleRehab uses local persistence first and synchronizes terminal session state to Firestore through WorkManager.
+
+The synchronization pipeline includes:
+
+- network-constrained background work
+- patient-scoped pending-session queries
+- retry behavior when authentication is temporarily unavailable
+- permanent-failure handling
+- exclusion of active `IN_PROGRESS` sessions
+- terminal-session synchronization only
+- multi-batch draining for larger pending queues
+- fresh synchronization requests when the patient experience loads
+- idempotent remote writes using stable session identifiers
+
+Local synchronization state is represented separately from the rehabilitation session lifecycle.
 
 ## Architecture
 
-TeleRehab follows a local-first architecture.
+TeleRehab follows a layered, local-first architecture.
 
-- **Domain layer** remains independent of Firebase, Room, Compose, and CameraX.
-- **Room** provides durable local state for patient-facing workflows.
-- **WorkManager** is used for resilient synchronization.
-- **Firebase Authentication** provides stable identity.
+- **Domain layer** contains rehabilitation, assignment, authentication, session, and synchronization rules without depending directly on Compose, Room, Firebase, or CameraX.
+- **Room** provides durable local assignment and session state.
+- **WorkManager** performs resilient background synchronization.
+- **Firebase Authentication** provides patient and therapist identity.
 - **Cloud Firestore** provides shared therapist/patient state.
-- **CameraX + pose analysis** powers guided exercise tracking.
-- Remote writes use stable client identifiers and idempotent upserts where appropriate.
-- Domain models, Room entities, and Firestore DTOs remain separate.
+- **Jetpack Compose** provides the application UI.
+- **CameraX** supplies camera frames for guided sessions.
+- **ML Kit Pose Detection** provides body landmarks used by the movement-analysis pipeline.
+- **Hilt** provides dependency injection.
 
-Major concepts are separated around:
-
-- Identity
-- Rehabilitation assignments
-- Session analysis
-- Synchronization
-- Therapist adherence and progress review
+Domain models, Room entities, and Firestore representations remain separated rather than sharing persistence-specific models across layers.
 
 For the original product and architecture baseline, see:
 
 `docs/architecture/MILESTONE_0_PRODUCT_ARCHITECTURE.md`
 
+## Patient progress
+
+Patient progress is derived from completed sessions and grouped by exercise assignment.
+
+The dashboard includes:
+
+- completed-session counts
+- total repetitions
+- latest repetition count
+- repetition change from the previous session
+- latest knee range
+- knee-range change from the previous session
+- recent repetition history
+- recent knee-range history
+
+Recent patient sessions are limited to locally completed sessions rather than mixing active or interrupted work into rehabilitation progress.
+
+## Therapist progress
+
+Therapists can review recent completed sessions for a selected patient and see:
+
+- assignment-specific session history
+- repetition history
+- knee-range history
+- latest-vs-previous trends
+- weekly adherence against prescribed frequency
+
+Patient selection and session loading are scoped by authenticated identity so one patient's rehabilitation history is not accidentally displayed for another.
+
 ## Security model
 
-TeleRehab uses role-aware Firestore rules.
+TeleRehab uses role-aware Firestore rules and authenticated identities.
 
-- Patients can read their own profile and assigned rehabilitation data.
-- Therapists can manage only patients linked to their therapist account.
-- Patient profiles are provisioned together with the therapist/patient relationship.
+- Patients access their own rehabilitation data.
+- Therapists manage patients linked to their therapist account.
 - Assignment writes are therapist-controlled.
+- Session synchronization is scoped to the authenticated patient.
 - Raw rehabilitation video is not stored in Firestore.
 
-The current patient-provisioning flow is intentionally optimized for the prototype: the therapist creates the patient account and shares a temporary generated password. A production deployment would add a dedicated invitation/password-reset flow rather than treating temporary credentials as the long-term onboarding mechanism.
+The current therapist-led patient provisioning flow is appropriate for the prototype. A production deployment would replace temporary credential handoff with a dedicated invitation and account-recovery flow.
 
 ## Technology
 
@@ -96,40 +168,82 @@ The current patient-provisioning flow is intentionally optimized for the prototy
 - Firebase Authentication
 - Cloud Firestore
 - CameraX
-- ML-based pose tracking
+- ML Kit Pose Detection
 - Hilt
 - Gradle
-- Firebase Emulator Suite for Firestore rules testing
+- JUnit
+- Firebase Emulator Suite
 
-## Engineering approach
+## Testing and validation
 
-Development is milestone-driven and validated continuously with:
+Development is milestone-driven and continuously validated with:
 
-- Kotlin compilation
-- Unit tests
+- JVM unit tests
+- domain lifecycle tests
+- synchronization regression tests
+- ViewModel tests
+- progress-calculation tests
 - Firestore security-rule tests
-- Physical Android device testing
-- Manual authentication and role-transition testing
-- Guided-session validation
-- Git history organized around small feature/refactor milestones
+- debug and release compilation
+- physical-device patient testing
+- physical-device therapist testing
+- authentication and role-transition testing
+- session completion/interruption/restart testing
 
-## Project direction
+Recent regression passes cover:
 
-Next work focuses on strengthening the product beyond the first vertical slice:
+- patient sign-in and dashboard loading
+- assignment loading
+- guided-session start
+- normal session completion
+- recent-session refresh after completion
+- patient progress refresh
+- Back interruption from a guided session
+- sign out during an active session
+- stale-session recovery after restart
+- therapist sign-in
+- therapist patient selection
+- patient switching
+- assignment management
+- therapist session history
+- therapist progress rendering
+- patient-scoped session synchronization
+- pending-session batch draining
 
-- Cleaner patient onboarding and credential handoff
-- Account/session lifecycle hardening
-- More rehabilitation exercises
-- Stronger adherence and progress visualization
-- Improved pose-quality feedback
-- More resilient background synchronization
-- Expanded automated UI/instrumentation coverage
-- Production-ready invitation and recovery flows
+## Building
+
+Run the local unit-test and debug build:
+
+```text
+gradlew.bat :app:testDebugUnitTest :app:assembleDebug
+```
+
+Build the release variant:
+
+```text
+gradlew.bat :app:assembleRelease
+```
+
+The project currently produces an **unsigned release APK**. Release signing and distribution configuration are intentionally outside the current MVP scope.
+
+## Current production gaps
+
+The core rehabilitation workflow is implemented. Remaining work is mainly productionization rather than fundamental product behavior:
+
+- production account invitation and recovery
+- release signing and distribution configuration
+- broader automated UI/instrumentation coverage
+- accessibility validation
+- broader device-compatibility validation
+- additional rehabilitation exercises
+- further camera-quality and movement-feedback refinement
 
 ## Scope
 
-TeleRehab is a rehabilitation workflow and exercise-tracking project. It is not intended to autonomously diagnose patients or make general medical decisions.
+TeleRehab is a rehabilitation workflow and exercise-tracking project.
+
+It is not intended to autonomously diagnose patients, prescribe treatment, or make general medical decisions.
 
 ---
 
-Built as a hands-on production Android engineering project focused on reliability, architecture, and real-world patient/therapist workflows.
+Built as a hands-on Android engineering project focused on architecture, reliability, lifecycle correctness, synchronization, and real-world patient/therapist workflows.
